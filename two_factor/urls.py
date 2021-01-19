@@ -2,7 +2,7 @@ from django.urls import path
 
 from two_factor.views import (
     BackupTokensView, DisableView, LoginView, PhoneDeleteView, PhoneSetupView,
-    ProfileView, QRGeneratorView, SetupCompleteView, SetupView,
+    ProfileView, QRGeneratorView, SetupCompleteView, SetupView, ManageKeysView,
 )
 
 core = [
@@ -40,6 +40,11 @@ core = [
         'account/two_factor/backup/phone/unregister/<int:pk>/',
         PhoneDeleteView.as_view(),
         name='phone_delete',
+    ),
+    url(
+        regex=r'^account/two_factor/manage_keys/$',
+        view=ManageKeysView.as_view(),
+        name='manage_keys',
     ),
 ]
 
