@@ -6,7 +6,7 @@ from django import forms
 from django.conf import settings
 from django.forms import Form, ModelForm
 from django.utils import timezone
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django_otp.forms import OTPAuthenticationFormMixin
 from django_otp.oath import totp
 from django_otp.plugins.otp_totp.models import TOTPDevice
@@ -79,18 +79,6 @@ class DeviceValidationForm(forms.Form):
         return token
 
 
-class YubiKeyDeviceForm(DeviceValidationForm):
-    token = forms.CharField(label=_("YubiKey"), widget=forms.PasswordInput())
-
-    error_messages = {
-        'invalid_token': _("The YubiKey could not be verified."),
-    }
-
-    def clean_token(self):
-        self.device.public_id = self.cleaned_data['token'][:-32]
-        return super().clean_token()
-
-
 class WebauthnDeviceForm(forms.Form):
     token = forms.CharField(label=_("WebAuthn Token"), widget=forms.PasswordInput(attrs={'autofocus': 'autofocus'}))
 
@@ -133,8 +121,8 @@ class WebauthnDeviceForm(forms.Form):
             key_format = webauthn_utils.get_response_key_format(response)
 
             self.webauthn_device_info = dict(
-                keyHandle=credentials.credential_id,
-                publicKey=credentials.public_key,
+                keyHandle=credentials.credential_id.decode('utf-8'),
+                publicKey=credentials.public_key.decode('utf-8'),
                 signCount=credentials.sign_count,
                 format=key_format,
             )
@@ -160,6 +148,18 @@ class WebauthnDeviceForm(forms.Form):
             sign_count=self.webauthn_device_info['signCount'],
             user=self.user
         )
+
+
+class YubiKeyDeviceForm(DeviceValidationForm):
+    token = forms.CharField(label=_("YubiKey"), widget=forms.PasswordInput())
+
+    error_messages = {
+        'invalid_token': _("The YubiKey could not be verified."),
+    }
+
+    def clean_token(self):
+        self.device.public_id = self.cleaned_data['token'][:-32]
+        return super().clean_token()
 
 
 class TOTPDeviceForm(forms.Form):
@@ -259,8 +259,8 @@ class AuthenticationTokenForm(OTPAuthenticationFormMixin, Form):
         """
         super().__init__(**kwargs)
         self.user = user
-        self.request = request
         self.initial_device = initial_device
+        self.request = request
 
         # YubiKey generates a OTP of 44 characters (not digits). So if the
         # user's primary device is a YubiKey, replace the otp_token
@@ -278,7 +278,7 @@ class AuthenticationTokenForm(OTPAuthenticationFormMixin, Form):
                 self.sign_request = json.dumps(webauthn_assertion_options)
                 self.request.session['webauthn_sign_request'] = self.sign_request
 
-        # Add a field to remeber this browser.
+        # Add a field to remember this browser.
         if getattr(settings, 'TWO_FACTOR_REMEMBER_COOKIE_AGE', None):
             if settings.TWO_FACTOR_REMEMBER_COOKIE_AGE < 3600:
                 minutes = int(settings.TWO_FACTOR_REMEMBER_COOKIE_AGE / 60)

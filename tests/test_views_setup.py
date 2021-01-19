@@ -1,6 +1,5 @@
-import unittest
 from binascii import unhexlify
-from unittest import mock
+from unittest import mock, skip
 
 from django.test import TestCase
 from django.test.utils import modify_settings, override_settings
@@ -31,7 +30,7 @@ class SetupTest(UserMixin, TestCase):
         self.assertContains(response, 'Follow the steps in this wizard to '
                                       'enable two-factor')
 
-    @unittest.skip('Now we never have only one method: WebAuthN is also available, alongside TOTP generator')
+    @skip('Now we never have only one method: WebAuthN is also available, alongside TOTP generator')
     @modify_settings(INSTALLED_APPS={'remove': ['otp_yubikey']})
     def test_setup_only_generator_available(self):
         response = self.client.post(

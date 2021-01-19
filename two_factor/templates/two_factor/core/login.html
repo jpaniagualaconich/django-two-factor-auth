@@ -30,15 +30,15 @@
     <input type="submit" value="" class="d-none" />
 
     {% if other_devices %}
-        <p>{% trans "Or, alternatively, use one of your other authentication methods:" %}</p>
-        <p>
-            {% for other in other_devices %}
-                <button name="challenge_device" value="{{ other.persistent_id }}"
-                        class="btn btn-secondary btn-block" type="submit">
-                    {{ other|device_action }}
-                </button>
-            {% endfor %}
-        </p>
+      <p>{% trans "Or, alternatively, use one of your other authentication methods:" %}</p>
+      <p>
+        {% for other in other_devices %}
+          <button name="challenge_device" value="{{ other.persistent_id }}"
+                  class="btn btn-secondary btn-block" type="submit">
+            {{ other|device_action }}
+          </button>
+        {% endfor %}
+      </p>
     {% endif %}
     {% if backup_tokens %}
       <p>{% trans "As a last resort, you can use a backup token:" %}</p>
@@ -53,30 +53,30 @@
 
   {{ form.media }}
   <script>
-      var request = {{ wizard.form.sign_request|default:'null'|safe }};
-      if (request != null) {
-          request.challenge = str2ab(request.challenge);
-          for (var i = 0; i < request.allowCredentials.length; i++) {
-              request.allowCredentials[i].id = str2ab(request.allowCredentials[i].id);
-          }
-
-          navigator.credentials.get({
-              publicKey: request
-          }).then((credential) => {
-              var r = credential.response;
-              var signResponse = {
-                  id: ab2str(credential.rawId),
-                  clientDataJSON: ab2str(r.clientDataJSON),
-                  signature: ab2str(r.signature),
-                  authenticatorData: ab2str(r.authenticatorData)
-              };
-              form = document.forms[0];
-              response = document.querySelector('[name=token-otp_token]');
-              response.value = JSON.stringify(signResponse);
-              form.submit();
-          }, (reason) => {
-              console.error("Authentication error:", reason);
-          });
+    var request = {{ wizard.form.sign_request|default:'null'|safe }};
+    if (request != null) {
+      request.challenge = str2ab(request.challenge);
+      for (var i = 0; i < request.allowCredentials.length; i++) {
+        request.allowCredentials[i].id = str2ab(request.allowCredentials[i].id);
       }
+
+      navigator.credentials.get({
+        publicKey: request
+      }).then((credential) => {
+        var r = credential.response;
+        var signResponse = {
+          id: ab2str(credential.rawId),
+          clientDataJSON: ab2str(r.clientDataJSON),
+          signature: ab2str(r.signature),
+          authenticatorData: ab2str(r.authenticatorData)
+        };
+        form = document.forms[0];
+        response = document.querySelector('[name=token-otp_token]');
+        response.value = JSON.stringify(signResponse);
+        form.submit();
+      }, (reason) => {
+        console.error("Authentication error:", reason);
+      });
+    }
   </script>
 {% endblock %}

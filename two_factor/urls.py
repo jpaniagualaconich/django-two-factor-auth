@@ -1,8 +1,8 @@
 from django.urls import path
 
 from two_factor.views import (
-    BackupTokensView, DisableView, LoginView, PhoneDeleteView, PhoneSetupView,
-    ProfileView, QRGeneratorView, SetupCompleteView, SetupView, ManageKeysView,
+    BackupTokensView, DisableView, LoginView, ManageKeysView, PhoneDeleteView, PhoneSetupView,
+    ProfileView, QRGeneratorView, SetupCompleteView, SetupView,
 )
 
 core = [
@@ -41,9 +41,9 @@ core = [
         PhoneDeleteView.as_view(),
         name='phone_delete',
     ),
-    url(
-        regex=r'^account/two_factor/manage_keys/$',
-        view=ManageKeysView.as_view(),
+    path(
+        'account/two_factor/manage_keys/',
+        ManageKeysView.as_view(),
         name='manage_keys',
     ),
 ]

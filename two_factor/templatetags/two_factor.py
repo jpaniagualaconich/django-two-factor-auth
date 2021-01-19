@@ -2,7 +2,7 @@ import re
 
 import phonenumbers
 from django import template
-from django.utils.translation import ugettext as _
+from django.utils.translation import gettext as _
 from django_otp.plugins.otp_totp.models import TOTPDevice
 
 from ..models import PhoneDevice, WebauthnDevice

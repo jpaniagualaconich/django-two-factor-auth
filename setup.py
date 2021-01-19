@@ -17,7 +17,7 @@ setup(
         'qrcode>=4.0.0,<6.99',
         'django-phonenumber-field>=1.1.0,<3.99',
         'django-formtools',
-        'webauthn>=0.4.5',
+        'webauthn>=0.4.7',
     ],
     extras_require={
         'call': ['twilio>=6.0'],

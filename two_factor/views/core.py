@@ -14,7 +14,8 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.views import SuccessURLAllowedHostsMixin
 from django.contrib.sites.shortcuts import get_current_site
-from django.forms import Form
+from django.core.signing import BadSignature
+from django.forms import Form, ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect, resolve_url
 from django.urls import reverse
@@ -26,24 +27,28 @@ from django.utils.translation import gettext as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.generic import DeleteView, FormView, TemplateView, ListView
+from django.views.generic import DeleteView, FormView, ListView, TemplateView
 from django.views.generic.base import View
 from django_otp import devices_for_user
 from django_otp.decorators import otp_required
 from django_otp.plugins.otp_static.models import StaticDevice, StaticToken
 from django_otp.plugins.otp_totp.models import TOTPDevice
+from django_otp.util import random_hex
 
 from two_factor import signals
-from two_factor.models import get_available_methods, WebauthnDevice, random_hex_str
+from two_factor.models import get_available_methods, WebauthnDevice
 from two_factor.utils import totp_digits, device_from_persistent_id
 
 from ..forms import (
     AuthenticationTokenForm, BackupTokenForm, DeviceValidationForm, MethodForm,
-    PhoneNumberForm, PhoneNumberMethodForm, TOTPDeviceForm, YubiKeyDeviceForm, WebauthnDeviceForm,
+    PhoneNumberForm, PhoneNumberMethodForm, TOTPDeviceForm, WebauthnDeviceForm, YubiKeyDeviceForm,
 )
 from ..models import PhoneDevice, get_available_phone_methods
 from ..utils import backup_phones, default_device, get_otpauth_url, devices_for_user
-from .utils import IdempotentSessionWizardView, class_view_decorator
+from .utils import (
+    IdempotentSessionWizardView, class_view_decorator,
+    get_remember_device_cookie, validate_remember_device_cookie,
+)
 
 try:
     from otp_yubikey.models import ValidationService, RemoteYubikeyDevice
@@ -144,13 +149,12 @@ class LoginView(SuccessURLAllowedHostsMixin, IdempotentSessionWizardView):
         """
         Login the user and redirect to the desired page.
         """
-        self.request.session.pop('form_device', None)
-        login(self.request, self.get_user())
 
         # Check if remember cookie should be set after login
         current_step_data = self.storage.get_step_data(self.steps.current)
         remember = bool(current_step_data and current_step_data.get('token-remember') == 'on')
 
+        self.request.session.pop('form_device', None)
         login(self.request, self.get_user())
 
         redirect_to = self.get_success_url()
@@ -289,6 +293,7 @@ class LoginView(SuccessURLAllowedHostsMixin, IdempotentSessionWizardView):
                     self.device_cache = default_device(self.get_user())
 
             self.request.session['form_device'] = self.device_cache.persistent_id
+
         return self.device_cache
 
     def get_other_devices(self, main_device=None):
@@ -337,6 +342,7 @@ class LoginView(SuccessURLAllowedHostsMixin, IdempotentSessionWizardView):
         if self.steps.current == 'token':
             context['device'] = self.get_device()
             context['other_devices'] = self.get_other_devices(main_device=context['device'])
+
             try:
                 context['backup_tokens'] = self.get_user().staticdevice_set\
                     .get(name='backup').token_set.count()
@@ -494,6 +500,7 @@ class SetupView(IdempotentSessionWizardView):
             form = [form for form in form_list if isinstance(form, TOTPDeviceForm)][0]
             device = form.save()
 
+        # WebauthnDeviceForm
         elif self.get_method() == 'webauthn':
             form = [form for form in form_list if isinstance(form, WebauthnDeviceForm)][0]
             device = form.save()
@@ -525,6 +532,7 @@ class SetupView(IdempotentSessionWizardView):
                 'user': self.request.user,
                 'request': self.request,
             })
+
         metadata = self.get_form_metadata(step)
         if metadata:
             kwargs.update({
