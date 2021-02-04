@@ -17,6 +17,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.signing import BadSignature
 from django.forms import Form, ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
+from django.http.response import HttpResponseBadRequest
 from django.shortcuts import redirect, resolve_url
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -154,7 +155,6 @@ class LoginView(SuccessURLAllowedHostsMixin, IdempotentSessionWizardView):
         current_step_data = self.storage.get_step_data(self.steps.current)
         remember = bool(current_step_data and current_step_data.get('token-remember') == 'on')
 
-        self.request.session.pop('form_device', None) 
         login(self.request, self.get_user())
 
         redirect_to = self.get_success_url()
@@ -287,12 +287,7 @@ class LoginView(SuccessURLAllowedHostsMixin, IdempotentSessionWizardView):
                     pass
 
             if not self.device_cache:
-                if self.request.session.get('form_device'):
-                    self.device_cache = device_from_persistent_id(self.get_user(), self.request.session['form_device'])
-                else:
-                    self.device_cache = default_device(self.get_user())
-
-            self.request.session['form_device'] = self.device_cache.persistent_id
+                self.device_cache = default_device(self.get_user())
 
         return self.device_cache
 
@@ -459,6 +454,14 @@ class SetupView(IdempotentSessionWizardView):
         method_data = self.storage.validated_step_data.get('method', {})
         return method_data.get('method', None)
 
+    def get(self, request, *args, **kwargs):
+            """
+            Start the setup wizard. Redirect if already enabled.
+            """
+            if default_device(self.request.user):
+                return redirect(self.success_url)
+            return super().get(request, *args, **kwargs)
+
     def get_form_list(self):
         """
         Check if there is only one method, then skip the MethodForm from form_list
@@ -559,7 +562,7 @@ class SetupView(IdempotentSessionWizardView):
 
         if method == 'yubikey':
             kwargs['public_id'] = self.storage.validated_step_data\
-                .get(method, {}).get('token', '')[:-32]
+                .get('yubikey', {}).get('token', '')[:-32]
             try:
                 kwargs['service'] = ValidationService.objects.get(name='default')
             except ValidationService.DoesNotExist:
@@ -785,27 +788,3 @@ class QRGeneratorView(View):
         resp = HttpResponse(content_type=content_type)
         img.save(resp)
         return resp
-
-
-@class_view_decorator(never_cache)
-@class_view_decorator(login_required)
-class ManageKeysView(ListView):
-    template_name = 'two_factor/core/manage_keys.html'
-
-    def get_queryset(self):
-        return devices_for_user(self.request.user)
-
-    def post(self, request):
-        assert 'delete' in request.POST
-        device = device_from_persistent_id(request.user, request.POST['persistent_id'])
-        device.delete()
-
-        other_devices_same_type = type(device).objects.devices_for_user(request.user, confirmed=None)
-        if other_devices_same_type.filter(name='default').count() == 0 and other_devices_same_type.count() > 0:
-            new_default_device = other_devices_same_type.first()
-            new_default_device.name = 'default'
-            new_default_device.save()
-
-        if django_otp.user_has_device(request.user, confirmed=None):
-            return HttpResponseRedirect(reverse('two_factor:manage_keys'))
-        return HttpResponseRedirect(reverse('two_factor:profile'))

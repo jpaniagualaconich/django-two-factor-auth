@@ -68,6 +68,46 @@ class SetupTest(UserMixin, TestCase):
         self.assertRedirects(response, reverse('two_factor:setup_complete'))
         self.assertEqual(1, self.user.totpdevice_set.count())
 
+    def test_setup_webauthn(self):
+        self.assertEqual(0, self.user.webauthn_keys.count())
+
+        response = self.client.post(
+            reverse('two_factor:setup'),
+            data={'setup_view-current_step': 'welcome'})
+        self.assertContains(response, 'Method:')
+
+        response = self.client.post(
+            reverse('two_factor:setup'),
+            data={'setup_view-current_step': 'method',
+                  'method-method': 'webauthn'})
+        self.assertContains(response, 'Token:')
+        session = self.client.session
+        self.assertIn('webauthn_registration_request', session.keys())
+
+        response = self.client.post(
+            reverse('two_factor:setup'),
+            data={'setup_view-current_step': 'webauthn'})
+        self.assertEqual(response.context_data['wizard']['form'].errors,
+                         {'token': ['This field is required.']})
+
+        with mock.patch('two_factor.forms.make_registration_response') as mrr, \
+            mock.patch('two_factor.forms.get_response_key_format') as grkf:
+            mocked_credentials = mock.Mock(
+                credential_id=b'mocked_credential_id',
+                public_key=b'mocked_public_key',
+                sign_count=0)
+            mrr.return_value = mock.Mock(
+                verify=mock.Mock(return_value=mocked_credentials))
+            grkf.return_value = 'mocked-key'
+
+            response = self.client.post(
+                reverse('two_factor:setup'),
+                data={'setup_view-current_step': 'webauthn',
+                      'webauthn-token': '{"payload": "mocked_token"}'})
+            
+        self.assertRedirects(response, reverse('two_factor:setup_complete'))
+        self.assertEqual(1, self.user.webauthn_keys.count())
+
     @override_settings(TWO_FACTOR_CALL_GATEWAY='two_factor.gateways.fake.Fake',
                        TWO_FACTOR_SMS_GATEWAY='two_factor.gateways.fake.Fake')
     def test_setup_generator_with_multi_method(self):
@@ -200,8 +240,7 @@ class SetupTest(UserMixin, TestCase):
         self.enable_otp()
         self.login_user()
         response = self.client.get(reverse('two_factor:setup'))
-        # [sp] we now support setup of multiple tokens
-        self.assertContains(response, 'Enable Two-Factor Authentication')
+        self.assertRedirects(response, reverse('two_factor:setup_complete'))
 
     def test_no_double_login(self):
         """

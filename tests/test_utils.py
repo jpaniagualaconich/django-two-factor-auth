@@ -7,7 +7,7 @@ from django_otp.util import random_hex
 
 from two_factor.models import PhoneDevice
 from two_factor.utils import (
-    backup_phones, default_device, get_otpauth_url, totp_digits,
+    backup_phones, default_device, device_from_persistent_id, get_otpauth_url, totp_digits,
 )
 from two_factor.views.utils import (
     get_remember_device_cookie, salted_hmac_sha256,
@@ -27,6 +27,22 @@ class UtilsTest(UserMixin, TestCase):
 
         default = user.phonedevice_set.create(name='default', number='+12024561111')
         self.assertEqual(default_device(user).pk, default.pk)
+
+    def test_device_from_persistent_id(self):
+        user = self.create_user()
+        self.assertEqual(device_from_persistent_id(user, 'nonExistentDeviceId'), None)
+
+        device = user.phonedevice_set.create(name='backup', number='+12024561111')
+        self.assertEqual(device_from_persistent_id(
+            user, 'two_factor.phonedevice/1').pk, device.pk)
+
+        another_device = user.phonedevice_set.create(name='default', number='+12024561111')
+        self.assertEqual(device_from_persistent_id(
+            user, 'two_factor.phonedevice/2').pk, another_device.pk)
+
+        self.assertEqual(device_from_persistent_id(
+            user, 'two_factor.phonedevice/2', list_of_devices=[device]), None)
+
 
     def test_backup_phones(self):
         self.assertQuerysetEqual(list(backup_phones(None)),

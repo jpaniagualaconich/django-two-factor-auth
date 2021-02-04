@@ -1,5 +1,5 @@
 from .core import (
-    BackupTokensView, LoginView, ManageKeysView, PhoneDeleteView,
+    BackupTokensView, LoginView, PhoneDeleteView,
     PhoneSetupView, QRGeneratorView, SetupCompleteView, SetupView,
 )
 from .mixins import OTPRequiredMixin
