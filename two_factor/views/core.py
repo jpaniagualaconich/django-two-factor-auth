@@ -17,7 +17,6 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.signing import BadSignature
 from django.forms import Form, ValidationError
 from django.http import Http404, HttpResponse, HttpResponseRedirect
-from django.http.response import HttpResponseBadRequest
 from django.shortcuts import redirect, resolve_url
 from django.urls import reverse
 from django.utils.decorators import method_decorator
@@ -28,7 +27,7 @@ from django.utils.translation import gettext as _
 from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 from django.views.decorators.debug import sensitive_post_parameters
-from django.views.generic import DeleteView, FormView, ListView, TemplateView
+from django.views.generic import DeleteView, FormView, TemplateView
 from django.views.generic.base import View
 from django_otp import devices_for_user
 from django_otp.decorators import otp_required
@@ -285,10 +284,8 @@ class LoginView(SuccessURLAllowedHostsMixin, IdempotentSessionWizardView):
                     self.device_cache = self.get_user().staticdevice_set.get(name='backup')
                 except StaticDevice.DoesNotExist:
                     pass
-
             if not self.device_cache:
                 self.device_cache = default_device(self.get_user())
-
         return self.device_cache
 
     def get_other_devices(self, main_device=None):
@@ -455,12 +452,12 @@ class SetupView(IdempotentSessionWizardView):
         return method_data.get('method', None)
 
     def get(self, request, *args, **kwargs):
-            """
-            Start the setup wizard. Redirect if already enabled.
-            """
-            if default_device(self.request.user):
-                return redirect(self.success_url)
-            return super().get(request, *args, **kwargs)
+        """
+        Start the setup wizard. Redirect if already enabled.
+        """
+        if default_device(self.request.user):
+            return redirect(self.success_url)
+        return super().get(request, *args, **kwargs)
 
     def get_form_list(self):
         """

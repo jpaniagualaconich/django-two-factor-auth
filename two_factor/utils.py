@@ -6,16 +6,10 @@ from django_otp import devices_for_user
 from two_factor.models import PhoneDevice
 
 
-def device_sort_key(device):
-    klass = device.__class__
-    key = klass.__module__ + '.' + klass.__name__
-    return settings.TWO_FACTOR_DEVICE_PREFERENCE.get(key, 1000)
-
-
 def default_device(user):
     if not user or user.is_anonymous:
         return
-    for device in sorted(devices_for_user(user), key=device_sort_key): 
+    for device in devices_for_user(user):
         if device.name == 'default':
             return device
 

@@ -8,13 +8,6 @@ class TwoFactorConfig(AppConfig):
     verbose_name = "Django Two Factor Authentication"
 
     defaults = {
-        'TWO_FACTOR_DEVICE_PREFERENCE': {
-            # a lower value means higher priority when computing user's default preference
-            'two_factor.models.WebauthnDevice': 10,
-            'django_otp.plugins.otp_totp.models.TOTPDevice': 20,
-            'two_factor.models.PhoneDevice': 30,
-            'django_otp.plugins.otp_static.models.StaticDevice': 40,
-        },
         'TWO_FACTOR_WEBAUTHN_TRUSTED_ATTESTATION_ROOT': webauthn.DEFAULT_TRUST_ANCHOR_DIR,
         'TWO_FACTOR_WEBAUTHN_TRUSTED_ATTESTATION_CERT_REQUIRED': True,
         'TWO_FACTOR_WEBAUTHN_SELF_ATTESTATION_PERMITTED': False,
