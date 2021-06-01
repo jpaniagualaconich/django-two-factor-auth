@@ -10,8 +10,6 @@ from django.urls import reverse
 from django_otp import DEVICE_ID_SESSION_KEY
 from django_otp.oath import totp
 from django_otp.util import random_hex
-from selenium import webdriver
-from selenium.webdriver.common.keys import Keys
 
 from .utils import UserMixin
 
