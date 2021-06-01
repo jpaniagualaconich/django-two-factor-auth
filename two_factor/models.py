@@ -131,6 +131,11 @@ class WebauthnDevice(ThrottlingMixin, Device):
             'keyHandle': self.key_handle,
             'version': 'WEBAUTHN',
         }
+    def as_credential(self):
+        return {
+            'id': self.key_handle,
+            'type': 'public-key',
+        }
 
     def get_throttle_factor(self):
         return getattr(settings, 'TWO_FACTOR_WEBAUTHN_THROTTLE_FACTOR', 1)
