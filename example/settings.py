@@ -105,6 +105,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 SILENCED_SYSTEM_CHECKS = ['admin.E410']
 
+MAX_EXCLUDED_CREDENTIALS = 3
+
 try:
     from .settings_private import *  # noqa
 except ImportError:
