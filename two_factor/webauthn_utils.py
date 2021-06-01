@@ -54,6 +54,10 @@ def make_credentials_options(user, relying_party):
     user_verification = 'required' if settings.TWO_FACTOR_WEBAUTHN_UV_REQUIRED else 'discouraged'
     credentials_options['authenticatorSelection'] = {'userVerification': user_verification}
 
+    # We need to get credentials to use in excludedCredentialDescriptorList, this list have information
+    # to avoid double registration of WebAuthnDevices per user. 
+    credentials_options['excludeCredentials'] = [d.as_credential() for d in WebauthnDevice.objects.filter(user=user)[:settings.MAX_EXCLUDED_CREDENTIALS]]
+
     return credentials_options
 
 
