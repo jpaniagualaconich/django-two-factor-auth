@@ -37,6 +37,9 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
         'extensions':{
             'webauthn.loc': True
         }
+    }
+    ASSERTION_DIC = {
+        
     } 
     def setUp(self):
         self.user = self.create_user()
@@ -57,7 +60,9 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
         )
     
     def test_make_assertion_options(self):
-        pass
+        self.login_user(user=self.user) 
+        make_assertion_options = webauthn_utils.make_assertion_options(user=self.user,relying_party=self.RELYING_PARTY)
+        self.assertEquals(make_assertion_options, make_assertion_options)
 
     def test_make_assertion_response(self):
         pass
