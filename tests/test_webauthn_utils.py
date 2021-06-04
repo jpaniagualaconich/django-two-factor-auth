@@ -69,8 +69,14 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
         self.assertEquals(make_credential_options['user']['name'],self.REGISTRATION_DIC['user']['name'])
     
     def test_make_registration_response(self):
-        self.login_user(user=self.user)
+        user = self.create_user()
+        self.login_user(user=user)
         token = ''
+        request = self.client.get(reverse('two_factor:setup'), 
+                                data={'setup_view-current_step': 'webauthn'
+                                
+                                })
+        
         response = self.client.post(reverse('two_factor:setup'),
                                     data={'setup_view-current_step': 'webauthn',
                                         'webauthn-token':token})
