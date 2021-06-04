@@ -19,21 +19,19 @@ from .utils import UserMixin
 
 class LoginTest(UserMixin, TestCase):
     def setUp(self):
-        self.driver = webdriver.Firefox()
+        self.driver = webdriver.Chrome()
         self.driver.maximize_window()
         
-
     def tearDown(self):
         self.driver.quit()
-
 
     def _post(self, data=None):
         return self.client.post(reverse('two_factor:login'), data=data)
 
     def test_form(self):
-        self.driver.get("https://dev.mypc.test/account/login/")
-        #self.assertContains(response, 'Password:')
-        self.driver.find_element_by_id('id_auth-password')
+        self.driver.get(reverse('login'))
+        id_user = self.driver.find_element_by_id('id_auth-password')
+        self.assertEquals(id_user, )
 
     # def test_invalid_login(self):
     #     response = self._post({'auth-username': 'unknown',
