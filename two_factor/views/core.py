@@ -502,7 +502,6 @@ class SetupView(IdempotentSessionWizardView):
 
         # WebauthnDeviceForm
         elif self.get_method() == 'webauthn':
-            breakpoint()
             form = [form for form in form_list if isinstance(form, WebauthnDeviceForm)][0]
             device = form.save()
 

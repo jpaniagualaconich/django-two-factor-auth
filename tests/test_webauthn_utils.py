@@ -71,16 +71,15 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
     def test_make_registration_response(self):
         user = self.create_user()
         self.login_user(user=user)
-        token = ''
+        token = 'jlvurcgekuiccfcvgdjffjldedjjgugk'
         request = self.client.get(reverse('two_factor:setup'), 
                                 data={'setup_view-current_step': 'webauthn'
-                                
                                 })
         
         response = self.client.post(reverse('two_factor:setup'),
                                     data={'setup_view-current_step': 'webauthn',
                                         'webauthn-token':token})
-        response = json.loads(self.cleaned_data['token'])
+        
         request = json.loads(self.request.session['webauthn_registration_request'])
         webauthn_registration_response = webauthn_utils.make_registration_response(
             request, response, self.RELYING_PARTY, self.ORIGIN
