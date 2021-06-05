@@ -71,24 +71,23 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
     def test_make_registration_response(self):
         user = self.create_user()
         self.login_user(user=user)
+        webauthn_registration_request = webauthn_utils.make_credentials_options(user=user,relying_party=self.RELYING_PARTY)
+        request = json.loads(webauthn_registration_request)
         token = 'jlvurcgekuiccfcvgdjffjldedjjgugk'
-        request = self.client.get(reverse('two_factor:setup'), 
-                                data={'setup_view-current_step': 'webauthn'
-                                })
-        
         response = self.client.post(reverse('two_factor:setup'),
                                     data={'setup_view-current_step': 'webauthn',
                                         'webauthn-token':token})
-        
-        request = json.loads(self.request.session['webauthn_registration_request'])
+                        
         webauthn_registration_response = webauthn_utils.make_registration_response(
             request, response, self.RELYING_PARTY, self.ORIGIN
         )
+
     
     def test_make_assertion_options(self):
-        self.login_user(user=self.user) 
-        make_assertion_options = webauthn_utils.make_assertion_options(user=self.user,relying_party=self.RELYING_PARTY)
-        self.assertEquals(make_assertion_options, make_assertion_options)
+        user = self.create_user()
+        self.login_user(user=user)
+        make_assertion_options = webauthn_utils.make_assertion_options(user=user,relying_party=self.RELYING_PARTY)
+        self.assertEquals(make_assertion_options, webauthn_utils.make_assertion_options(user=user,relying_party=self.RELYING_PARTY))
 
     def test_make_assertion_response(self):
         pass
