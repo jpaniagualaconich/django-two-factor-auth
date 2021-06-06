@@ -41,15 +41,16 @@ class LoginTest(UserMixin, TestCase):
         self.webdriver.get(login_url)
         self.assertEquals(login_url,self.webdriver.current_url)
 
+        # Completed Form
         username = self.webdriver.find_element_by_id('id_auth-username')
         username.clear()
-        username.send_keys("user3")
+        username.send_keys("user5")
 
         password = self.webdriver.find_element_by_id('id_auth-password')
         password.clear()
-        password.send_keys("user3")
+        password.send_keys("user5")
 
-        
+        # "Next" Clicked
         button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
         button_next.click()
 
@@ -57,15 +58,43 @@ class LoginTest(UserMixin, TestCase):
         redirect_url = 'https://dev.mypc.test/account/two_factor/'
         current_url = self.webdriver.current_url
         self.assertEquals(current_url,redirect_url)
+        
+        # "Next" Clicked
+        button_next = self.webdriver.find_element_by_xpath("//a[@class='btn btn-primary']")
+        button_next.click()
 
-        self.webdriver.find_element_by_name('btn btn-primary').click()
-
+        # Confirm the creation of the second factor device
         redirect_url = 'https://dev.mypc.test/account/two_factor/setup/'
         current_url = self.webdriver.current_url
         self.assertEquals(current_url,redirect_url)
+        button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
+        button_next.click()
 
-        self.webdriver.find_element_by_name("btn btn-primary").click()
-        webauthn_input = self.webdriver.find_element_by_value("webauthn")
+        # Select wizard -> webauthn
+        redirect_url = 'https://dev.mypc.test/account/two_factor/setup/'
+        current_url = self.webdriver.current_url
+        self.assertEquals(current_url,redirect_url)
+        webauthn_input = self.webdriver.find_element_by_xpath("//input[@value='webauthn']")
+        webauthn_input.click()
+        button_next = self.webdriver.find_element_by_xpath("//button[@class='btn btn-primary']")
+        button_next.click()
+        
+        # Wait for authenticator(webauthn)
+        try:
+            token_present = EC.presence_of_element_located((By.XPATH, "//input[@name='webauthn-token']"))
+            WebDriverWait(webdriver,TimeoutError).until(token_present)
+        except:
+            print("no anda")
+        self.webdriver.find_element_by_xpath("//a[@class='float-right btn btn-link']")
+        
+        # Confirmation
+        redirect_url = 'https://dev.mypc.test/account/two_factor/'
+        current_url = self.webdriver.current_url
+        self.assertEquals(current_url,redirect_url)
+
+
+
+
 
 
     # def test_valid_login_with_custom_post_redirect(self):
