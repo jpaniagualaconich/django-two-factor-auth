@@ -2,71 +2,71 @@
 import json
 
 from django.conf import settings
-from django.shortcuts import resolve_url
 from django.test import TestCase
-from django.test.utils import override_settings
 from django.urls import reverse
 
 # Selenium
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 
 from .utils import UserMixin
 
 
 class LoginTest(UserMixin, TestCase):
+    def _post(self, data=None):
+        return self.client.post(reverse('two_factor:login'), data=data)
+    
+    @classmethod
     def setUp(self):
+        # Create a new Chrome session
         self.webdriver = webdriver.Chrome(ChromeDriverManager().install())
+        self.webdriver.implicitly_wait(30)
         self.webdriver.maximize_window()
         
+        # Navigate into aplication
+        self.webdriver.get("https://dev.mypc.test/")
+
+    @classmethod    
     def tearDown(self):
         self.webdriver.quit()
 
-    def _post(self, data=None):
-        return self.client.post(reverse('two_factor:login'), data=data)
 
     def test_valid_login(self):
-        self.webdriver.get("https://dev.mypc.test/account/login/")
+        # Navigate into aplication login page
+        login_url = "https://dev.mypc.test/account/login/"
+        self.webdriver.get(login_url)
+        self.assertEquals(login_url,self.webdriver.current_url)
 
         username = self.webdriver.find_element_by_id('id_auth-username')
         username.clear()
-        username.send_keys("user1")
+        username.send_keys("user3")
 
         password = self.webdriver.find_element_by_id('id_auth-password')
         password.clear()
-        password.send_keys("user1")
+        password.send_keys("user3")
+
+        
+        button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
+        button_next.click()
+
+        # Navegate into aplication two_factor's device register
+        redirect_url = 'https://dev.mypc.test/account/two_factor/'
+        current_url = self.webdriver.current_url
+        self.assertEquals(current_url,redirect_url)
 
         self.webdriver.find_element_by_name('btn btn-primary').click()
 
+        redirect_url = 'https://dev.mypc.test/account/two_factor/setup/'
+        current_url = self.webdriver.current_url
+        self.assertEquals(current_url,redirect_url)
 
-    # def test_invalid_login(self):
-    #     response = self._post({'auth-username': 'unknown',
-    #                            'auth-password': 'secret',
-    #                            'login_view-current_step': 'auth'})
-    #     self.assertContains(response, 'Please enter a correct')
-    #     self.assertContains(response, 'and password.')
+        self.webdriver.find_element_by_name("btn btn-primary").click()
+        webauthn_input = self.webdriver.find_element_by_value("webauthn")
 
-    # @mock.patch('two_factor.views.core.signals.user_verified.send')
-    # def test_valid_login(self, mock_signal):
-    #     self.create_user()
-    #     response = self._post({'auth-username': 'bouke@example.com',
-    #                            'auth-password': 'secret',
-    #                            'login_view-current_step': 'auth'})
-    #     self.assertRedirects(response, resolve_url(settings.LOGIN_REDIRECT_URL))
-
-    #     # No signal should be fired for non-verified user logins.
-    #     self.assertFalse(mock_signal.called)
-
-    # def test_valid_login_with_custom_redirect(self):
-    #     redirect_url = reverse('two_factor:setup')
-    #     self.create_user()
-    #     response = self.client.post(
-    #         '%s?%s' % (reverse('two_factor:login'), 'next=' + redirect_url),
-    #         {'auth-username': 'bouke@example.com',
-    #          'auth-password': 'secret',
-    #          'login_view-current_step': 'auth'})
-    #     self.assertRedirects(response, redirect_url)
 
     # def test_valid_login_with_custom_post_redirect(self):
     #     redirect_url = reverse('two_factor:setup')
