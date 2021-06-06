@@ -8,10 +8,16 @@ from django.conf import settings
 from django.test import TestCase
 from django.urls import reverse
 
-from webauthn import const
+# Webauthn imports
 from two_factor import webauthn_utils
 from two_factor.forms import WebauthnDeviceForm
 from two_factor.models import WebauthnDevice
+
+# This constants represents algorithm for pubKeyCredParams
+COSE_ALG_ES256 = -7
+COSE_ALG_RS256 = -37
+COSE_ALG_PS256 = -257
+
 
 class WebAuthnUtilsTest(UserMixin,TestCase):
     ASSERTION_DIC = {
@@ -19,8 +25,8 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
     } 
     def setUp(self):
         super().setUp()
-        user = self.create_user()
-        self.login_user(user=user)
+        self.user = self.create_user()
+        self.login_user(user=self.user)
         
         request = self.client.post(
             reverse('two_factor:setup'),
@@ -43,7 +49,7 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
                 'id': self.RELYING_PARTY['id'],
             },
             'user':{
-                'id': webauthn_utils.make_user_id(user),
+                'id': webauthn_utils.make_user_id(self.user),
                 'name': 'bouke@example.com',
                 'displayName': "bouke@example.com",
                 'icon': None,
@@ -59,7 +65,7 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
                 'type': 'public-key',
             }],
             'timeout': 60000,
-            'excludeCredentials': [d.as_credential() for d in WebauthnDevice.objects.filter(user=user)[:settings.MAX_EXCLUDED_CREDENTIALS]],
+            'excludeCredentials': [d.as_credential() for d in WebauthnDevice.objects.filter(user=self.user)[:settings.MAX_EXCLUDED_CREDENTIALS]],
             'attestation': 'direct',
             'extensions':{
                 'webauthn.loc': True
@@ -68,7 +74,7 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
         }
         
         # user's webauthn device creation
-        webauthn_device = WebauthnDevice.objects.create()
+        #webauthn_device = WebauthnDevice.objects.create()
         # Should be able to select Webauthn method
         response = self.client.post(reverse('two_factor:setup'),
                                     data={'setup_view-current_step': 'welcome'})
@@ -76,18 +82,15 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
 
 
     def test_make_credentials_options(self):
-        user = self.create_user()
-        self.login_user(user=user)
-        user._password 
-        make_credential_options = webauthn_utils.make_credentials_options(user=user,relying_party=self.RELYING_PARTY)
-        try:
-            self.assertFalse(self.assertDictEqual(make_credential_options, webauthn_utils.make_credentials_options(user=user,relying_party=self.RELYING_PARTY)))
-            self.assertFalse(self.assertDictEqual(make_credential_options,self.REGISTRATION_DIC))
-            self.assertEquals(make_credential_options['excludeCredentials'], self.REGISTRATION_DIC['excludeCredentials'])
-            self.assertEquals(make_credential_options['user']['name'],self.REGISTRATION_DIC['user']['name'])
-            self.assertEquals(make_credential_options['authenticatorSelection']['userVerification'], self.REGISTRATION_DIC['authenticatorSelection']['userVerification'])
-        except:
-            print('make_credential_options test failed')
+        self.login_user(user=self.user)
+        make_credential_options = webauthn_utils.make_credentials_options(user=self.user,relying_party=self.RELYING_PARTY)
+        
+        # Assertions for make_credentials_options
+        self.assertFalse(self.assertDictEqual(make_credential_options, webauthn_utils.make_credentials_options(user=self.user,relying_party=self.RELYING_PARTY)))
+        self.assertFalse(self.assertDictEqual(make_credential_options,self.REGISTRATION_DIC))
+        self.assertEquals(make_credential_options['excludeCredentials'], self.REGISTRATION_DIC['excludeCredentials'])
+        self.assertEquals(make_credential_options['user']['name'],self.REGISTRATION_DIC['user']['name'])
+        self.assertEquals(make_credential_options['authenticatorSelection']['userVerification'], self.REGISTRATION_DIC['authenticatorSelection']['userVerification'])
      
     # def test_make_registration_response(self):
     #     user = self.create_user()
