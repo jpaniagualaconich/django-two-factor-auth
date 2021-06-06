@@ -117,6 +117,7 @@ class WebauthnDeviceForm(forms.Form):
             self.request.session['webauthn_registration_request'] = self.registration_request
 
     def clean_token(self):
+        breakpoint()
         response = json.loads(self.cleaned_data['token'])
         try:
             request = json.loads(self.request.session['webauthn_registration_request'])

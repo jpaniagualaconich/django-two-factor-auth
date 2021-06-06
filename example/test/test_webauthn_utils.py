@@ -70,15 +70,10 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
             'extensions':{
                 'webauthn.loc': True
             },
-            'authenticatorSelection':{'userVerification':'required'},
+            'authenticatorSelection':{
+                'userVerification':'required' if settings.TWO_FACTOR_WEBAUTHN_UV_REQUIRED else 'discouraged'
+                },
         }
-        
-        # user's webauthn device creation
-        #webauthn_device = WebauthnDevice.objects.create()
-        # Should be able to select Webauthn method
-        response = self.client.post(reverse('two_factor:setup'),
-                                    data={'setup_view-current_step': 'welcome'})
-        self.assertContains(response, 'webauthn')
 
 
     def test_make_credentials_options(self):
@@ -86,25 +81,33 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
         make_credential_options = webauthn_utils.make_credentials_options(user=self.user,relying_party=self.RELYING_PARTY)
         
         # Assertions for make_credentials_options
-        self.assertFalse(self.assertDictEqual(make_credential_options, webauthn_utils.make_credentials_options(user=self.user,relying_party=self.RELYING_PARTY)))
-        self.assertFalse(self.assertDictEqual(make_credential_options,self.REGISTRATION_DIC))
         self.assertEquals(make_credential_options['excludeCredentials'], self.REGISTRATION_DIC['excludeCredentials'])
         self.assertEquals(make_credential_options['user']['name'],self.REGISTRATION_DIC['user']['name'])
         self.assertEquals(make_credential_options['authenticatorSelection']['userVerification'], self.REGISTRATION_DIC['authenticatorSelection']['userVerification'])
+        self.assertFalse(make_credential_options['challenge'] == self.REGISTRATION_DIC['challenge'])
+        self.assertEquals(make_credential_options['user']['id'],self.REGISTRATION_DIC['user']['id'])
+        
+        
+        
      
-    # def test_make_registration_response(self):
-    #     user = self.create_user()
-    #     self.login_user(user=user)
-    #     webauthn_registration_request = webauthn_utils.make_credentials_options(user=user,relying_party=self.RELYING_PARTY)
-    #     request = json.loads(webauthn_registration_request)
-    #     token = 'jlvurcgekuiccfcvgdjffjldedjjgugk'
-    #     response = self.client.post(reverse('two_factor:setup'),
-    #                                 data={'setup_view-current_step': 'webauthn',
-    #                                     'webauthn-token':token})
+    def test_make_registration_response(self):
+        self.login_user(user=self.user)
+        webauthn_registration_request = webauthn_utils.make_credentials_options(user=self.user,relying_party=self.RELYING_PARTY)
+        request = json.loads(webauthn_registration_request)
+        
+        token = {
+            "id":"jG8U_3ojAw15KCsXLx93wA5fix4VeVVrrdW5dxaqmrI",
+            "clientDataJSON":"eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiVXRoekZ6QkREWW5GT0ZKZmYwOV9KRW9YcWFXQmRVWjBJU1daRi1SSzFwSSIsIm9yaWdpbiI6Imh0dHBzOi8vZGV2Lm15cGMudGVzdCIsImNyb3NzT3JpZ2luIjpmYWxzZX0",
+            "attestationObject":"o2NmbXRoZmlkby11MmZnYXR0U3RtdKJjc2lnWEgwRgIhALQy_v5CG7Iw1VIWfLjJNLw_lkMl-tEPMToctaRusJm0AiEA3nkZ0yaAobQTNfv7xwwgoOejllAZSLAxGQY9cmU5O79jeDVjgVkB4jCCAd4wggGAoAMCAQICAQEwDQYJKoZIhvcNAQELBQAwYDELMAkGA1UEBhMCVVMxETAPBgNVBAoMCENocm9taXVtMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMRowGAYDVQQDDBFCYXRjaCBDZXJ0aWZpY2F0ZTAeFw0xNzA3MTQwMjQwMDBaFw00MTA2MDEwMDUzMTRaMGAxCzAJBgNVBAYTAlVTMREwDwYDVQQKDAhDaHJvbWl1bTEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjEaMBgGA1UEAwwRQmF0Y2ggQ2VydGlmaWNhdGUwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASNYX5lyVCOZLzFZzrIKmeZ2jwURmgsJYxGP__fWN_S-j5sN4tT15XEpN_7QZnt14YvI6uvAgO0uJEboFaZlOEBoygwJjATBgsrBgEEAYLlHAIBAQQEAwIFIDAPBgNVHRMBAf8EBTADAQEAMA0GCSqGSIb3DQEBCwUAA0kAMEYCIQCRnz8VkrQiqO2bVMay7ylMkys8lAQx1qfTqjbsbDKWyAIhAL6cQXPoXLO2FY1ZETjzFutCJZ7ZnM2Ki1zRAVi_pyGaaGF1dGhEYXRhWKRuLdl-XiO8OZcxMrelHAwyyICdNRPE0iuzW4ejVJpuakEAAAAAAAAAAAAAAAAAAAAAAAAAAAAgjG8U_3ojAw15KCsXLx93wA5fix4VeVVrrdW5dxaqmrKlAQIDJiABIVgg0lcmU9O_uc8VJZnavYvjF_QwbOxMISYY5XW73mLKtLsiWCB8L9D9h5inMJlbRBpKNlNlQ7Y49JScryKPf5k-RUmclw"
+            }
+            
+        response = self.client.post(reverse('two_factor:setup'),
+                                    data={'setup_view-current_step': 'webauthn',
+                                        'webauthn-token':token})
                         
-    #     webauthn_registration_response = webauthn_utils.make_registration_response(
-    #         request, response, self.RELYING_PARTY, self.ORIGIN
-    #     )
+        webauthn_registration_response = webauthn_utils.make_registration_response(
+            request, response, self.RELYING_PARTY, self.ORIGIN
+        )
 
     
     # def test_make_assertion_options(self):
