@@ -21,15 +21,24 @@ class LoginTest(UserMixin, TestCase):
         self.webdriver.maximize_window()
         
     def tearDown(self):
-        self.driver.quit()
+        self.webdriver.quit()
 
     def _post(self, data=None):
         return self.client.post(reverse('two_factor:login'), data=data)
 
-    def test_form(self):
-        self.webdriver.get(reverse('login'))
-        id_user = self.webdriver.find_element_by_id('id_auth-password')
-        
+    def test_valid_login(self):
+        self.webdriver.get("https://dev.mypc.test/account/login/")
+
+        username = self.webdriver.find_element_by_id('id_auth-username')
+        username.clear()
+        username.send_keys("user1")
+
+        password = self.webdriver.find_element_by_id('id_auth-password')
+        password.clear()
+        password.send_keys("user1")
+
+        self.webdriver.find_element_by_name('btn btn-primary').click()
+
 
     # def test_invalid_login(self):
     #     response = self._post({'auth-username': 'unknown',
