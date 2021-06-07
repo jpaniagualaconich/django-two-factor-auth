@@ -80,12 +80,14 @@ class LoginTest(UserMixin, TestCase):
         button_next = self.webdriver.find_element_by_xpath("//button[@class='btn btn-primary']")
         button_next.click()
         
-        # Wait for authenticator(webauthn)
+        # Wait for authenticator(webauthn) //NO FUNCIONA//
         try:
-            token_present = EC.presence_of_element_located((By.XPATH, "//input[@name='webauthn-token']"))
-            WebDriverWait(webdriver,TimeoutError).until(token_present)
+            delay = 3 #seconds
+            token_present = WebDriverWait(self.webdriver,delay).until(EC.presence_of_element_located((By.XPATH, "//input[@name='webauthn-token']")))
+            print("Anda")
         except TimeoutException:
             print("no anda: " + str(TimeoutException))
+        
         self.webdriver.find_element_by_xpath("//a[@class='float-right btn btn-link']")
         
         # Confirmation
@@ -130,8 +132,16 @@ class RegisterWebauthnTest(UserMixin, TestCase):
         button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
         button_next.click()
         
+        # Tengo que esperar que abra la llave
+        try:
+            delay = 3 #Seconds
+            token_opt = WebDriverWait(self.webdriver, delay).until(EC.url_contains('https://dev.mypc.test/account/two_factor/'))
+            print("Page is ready")
+        except TimeoutException:
+            print("Se mamo: " + str(TimeoutException))
+        
         # Navigate into register two factor device page 
-        register_url = "https://dev.mypc.test//account/two_factor/"
+        register_url = "https://dev.mypc.test/account/two_factor/"
         self.webdriver.get(register_url)
 
         button_add_new_device = self.webdriver.find_element_by_xpath("//a[@href='/account/two_factor/setup/']")
