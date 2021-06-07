@@ -82,20 +82,21 @@ class LoginTest(UserMixin, TestCase):
         
         # Wait for authenticator(webauthn) //NO FUNCIONA//
         try:
-            delay = 3 #seconds
-            token_present = WebDriverWait(self.webdriver,delay).until(EC.presence_of_element_located((By.XPATH, "//input[@name='webauthn-token']")))
-            print("Anda")
+            delay = 8 #Seconds
+            token_opt = WebDriverWait(self.webdriver, delay).until(EC.url_contains('https://dev.mypc.test/account/two_factor/complete/'))
+            print("Page is ready")
         except TimeoutException:
-            print("no anda: " + str(TimeoutException))
+            print("Se mamo: " + str(TimeoutException))
         
-        self.webdriver.find_element_by_xpath("//a[@class='float-right btn btn-link']")
-        
+        complete = self.webdriver.find_element_by_xpath("//a[@class='float-right btn btn-link']")
+        complete.click()
+
         # Confirmation
         redirect_url = 'https://dev.mypc.test/account/two_factor/'
         current_url = self.webdriver.current_url
         self.assertEquals(current_url,redirect_url)
 
-class RegisterWebauthnTest(UserMixin, TestCase):
+class RegisterWebAuthnTest(UserMixin, TestCase):
     def _post(self, data=None):
         return self.client.post(reverse('two_factor:login'), data=data)
     
@@ -134,7 +135,7 @@ class RegisterWebauthnTest(UserMixin, TestCase):
         
         # Tengo que esperar que abra la llave
         try:
-            delay = 3 #Seconds
+            delay = 8 #Seconds
             token_opt = WebDriverWait(self.webdriver, delay).until(EC.url_contains('https://dev.mypc.test/account/two_factor/'))
             print("Page is ready")
         except TimeoutException:
