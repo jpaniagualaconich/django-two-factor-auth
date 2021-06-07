@@ -11,6 +11,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
 
 from .utils import UserMixin
@@ -44,11 +45,11 @@ class LoginTest(UserMixin, TestCase):
         # Completed Form
         username = self.webdriver.find_element_by_id('id_auth-username')
         username.clear()
-        username.send_keys("user5")
+        username.send_keys("userLogin")
 
         password = self.webdriver.find_element_by_id('id_auth-password')
         password.clear()
-        password.send_keys("user5")
+        password.send_keys("userLogin")
 
         # "Next" Clicked
         button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
@@ -83,11 +84,62 @@ class LoginTest(UserMixin, TestCase):
         try:
             token_present = EC.presence_of_element_located((By.XPATH, "//input[@name='webauthn-token']"))
             WebDriverWait(webdriver,TimeoutError).until(token_present)
-        except:
-            print("no anda")
+        except TimeoutException:
+            print("no anda: " + str(TimeoutException))
         self.webdriver.find_element_by_xpath("//a[@class='float-right btn btn-link']")
         
         # Confirmation
         redirect_url = 'https://dev.mypc.test/account/two_factor/'
         current_url = self.webdriver.current_url
         self.assertEquals(current_url,redirect_url)
+
+class RegisterWebauthnTest(UserMixin, TestCase):
+    def _post(self, data=None):
+        return self.client.post(reverse('two_factor:login'), data=data)
+    
+    @classmethod
+    def setUp(self):
+        # Create a new Chrome session
+        self.webdriver = webdriver.Chrome(ChromeDriverManager().install())
+        self.webdriver.implicitly_wait(30)
+        self.webdriver.maximize_window()
+        
+        # Navigate into aplication
+        self.webdriver.get("https://dev.mypc.test/")
+
+    @classmethod    
+    def tearDown(self):
+        self.webdriver.quit()
+
+    def test_not_register_the_same_device(self):
+        # Navigate into aplication login page
+        login_url = "https://dev.mypc.test/account/login/"
+        self.webdriver.get(login_url)
+        self.assertEquals(login_url,self.webdriver.current_url)
+
+        # Completed Form
+        username = self.webdriver.find_element_by_id('id_auth-username')
+        username.clear()
+        username.send_keys("user5")
+
+        password = self.webdriver.find_element_by_id('id_auth-password')
+        password.clear()
+        password.send_keys("user5")
+
+        # "Next" Clicked
+        button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
+        button_next.click()
+        
+        # Navigate into register two factor device page 
+        register_url = "https://dev.mypc.test//account/two_factor/"
+        self.webdriver.get(register_url)
+
+        button_add_new_device = self.webdriver.find_element_by_xpath("//a[@href='/account/two_factor/setup/']")
+        button_add_new_device.click()
+
+        # Confirmation
+        redirect_url = 'https://dev.mypc.test/account/two_factor/setup/'
+        current_url = self.webdriver.current_url
+        self.assertEquals(current_url,redirect_url)
+
+
