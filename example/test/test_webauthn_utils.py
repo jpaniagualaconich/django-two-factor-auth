@@ -94,6 +94,7 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
         
      
     def test_make_registration_response(self):
+        # Para mi que no tengo que mockar el Json.loads
         with mock.patch('two_factor.webauthn_utils.make_credentials_options',return_value='registration_dic') as make_credential_options, mock.patch('json.load', return_value='registration_dic_json') as json_load:
             webauthn_registration_request = webauthn_utils.make_credentials_options(user=self.user,relying_party=self.RELYING_PARTY)
             request = json.loads(webauthn_registration_request)
