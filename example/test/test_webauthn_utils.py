@@ -19,16 +19,13 @@ COSE_ALG_ES256 = -7
 COSE_ALG_RS256 = -37
 COSE_ALG_PS256 = -257
 
-def get_credentials(user):
-   credential_list = [d.as_credential() for d in WebauthnDevice.objects.filter(user=user)[:settings.MAX_EXCLUDED_CREDENTIALS]]
-   return  credential_list
 
 class WebAuthnUtilsTest(UserMixin,TestCase): 
     def setUp(self):
         super().setUp()
         self.user = self.create_user()
         self.login_user(user=self.user)
-        
+
         self.RELYING_PARTY = {
             'id': 'dev.mypc.test',
             'name': settings.TWO_FACTOR_WEBAUTHN_RP_NAME
@@ -97,10 +94,13 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
         
      
     def test_make_registration_response(self):
-        self.login_user(user=self.user)
-        webauthn_registration_request = webauthn_utils.make_credentials_options(user=self.user,relying_party=self.RELYING_PARTY)
-        request = json.loads(webauthn_registration_request)
+        with mock.patch('two_factor.webauthn_utils.make_credentials_options',return_value='registration_dic') as make_credential_options, mock.patch('json.load', return_value='registration_dic_json') as json_load:
+            webauthn_registration_request = webauthn_utils.make_credentials_options(user=self.user,relying_party=self.RELYING_PARTY)
+            request = json.loads(webauthn_registration_request)
         
+        assert make_credential_options.called
+        assert json_load.called
+
         #Consultar Sobre posibles datos de prueba. Mock
         token = {
             "id":"jG8U_3ojAw15KCsXLx93wA5fix4VeVVrrdW5dxaqmrI",

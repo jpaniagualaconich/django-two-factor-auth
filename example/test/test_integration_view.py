@@ -35,7 +35,7 @@ class LoginTest(UserMixin, TestCase):
     def tearDown(self):
         self.webdriver.quit()
 
-
+    
     def test_valid_login(self):
         # Navigate into aplication login page
         login_url = "https://dev.mypc.test/account/login/"
@@ -82,7 +82,7 @@ class LoginTest(UserMixin, TestCase):
         
         # Agregar como usar webauthn en chrome, evitar la trampa.
         # Init The emulator Webauthn device in chrome
-        
+
 
 
 
