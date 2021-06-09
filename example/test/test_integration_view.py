@@ -80,6 +80,12 @@ class LoginTest(UserMixin, TestCase):
         button_next = self.webdriver.find_element_by_xpath("//button[@class='btn btn-primary']")
         button_next.click()
         
+        # Agregar como usar webauthn en chrome, evitar la trampa.
+        # Init The emulator Webauthn device in chrome
+        
+
+
+
         # Wait for authenticator(webauthn) //NO FUNCIONA//
         try:
             delay = 8 #Seconds
