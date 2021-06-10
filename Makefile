@@ -17,6 +17,16 @@ test:
 	DJANGO_SETTINGS_MODULE=tests.settings PYTHONPATH=. \
 		django-admin.py test ${TARGET}
 
+test_server:
+	docker-compose up -d
+	DJANGO_SETTINGS_MODULE=tests.settings PYTHONPATH=. \
+		django-admin.py runserver
+	docker-compose down	
+
+selenium_test:
+	python test_webauthn_flow.py
+
+
 migrations:
 	DJANGO_SETTINGS_MODULE=tests.settings PYTHONPATH=. \
 		django-admin.py makemigrations two_factor
