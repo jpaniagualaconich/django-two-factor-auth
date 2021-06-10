@@ -19,6 +19,9 @@ def make_user_id(user):
     hashed_id = sha1(str(user.pk).encode('utf-8')).hexdigest().encode('utf-8')
     return _webauthn_b64_encode(hashed_id).decode('utf-8')
 
+def get_credentials(user):
+   credential_list = [d.as_credential() for d in WebauthnDevice.objects.filter(user=user)[:settings.MAX_EXCLUDED_CREDENTIALS]]
+   return  credential_list
 
 def get_response_key_format(response):
     att_obj = cbor2.loads(_webauthn_b64_decode(response['attObj']))
@@ -56,7 +59,7 @@ def make_credentials_options(user, relying_party):
 
     # We need to get credentials to use in excludedCredentialDescriptorList, this list have information
     # to avoid double registration of WebAuthnDevices per user. 
-    credentials_options['excludeCredentials'] = [d.as_credential() for d in WebauthnDevice.objects.filter(user=user)[:settings.MAX_EXCLUDED_CREDENTIALS]]
+    credentials_options['excludeCredentials'] = get_credentials(user)
 
     return credentials_options
 

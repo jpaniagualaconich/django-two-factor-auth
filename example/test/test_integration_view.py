@@ -1,5 +1,6 @@
 #En este archivo vamos a hacer los integration test
 import json
+from django import urls
 
 from django.conf import settings
 from django.test import TestCase
@@ -21,6 +22,9 @@ class LoginTest(UserMixin, TestCase):
     def _post(self, data=None):
         return self.client.post(reverse('two_factor:login'), data=data)
     
+    def assert_urls(self,redirect_url):
+       return self.assertEquals(self.webdriver.current_url,redirect_url)
+
     @classmethod
     def setUp(self):
         # Create a new Chrome session
@@ -30,12 +34,13 @@ class LoginTest(UserMixin, TestCase):
         
         # Navigate into aplication
         self.webdriver.get("https://dev.mypc.test/")
+        options = self.webdriver.ChromeOptions()
 
     @classmethod    
     def tearDown(self):
         self.webdriver.quit()
 
-    
+       
     def test_valid_login(self):
         # Navigate into aplication login page
         login_url = "https://dev.mypc.test/account/login/"
@@ -57,24 +62,22 @@ class LoginTest(UserMixin, TestCase):
 
         # Navegate into aplication two_factor's device register
         redirect_url = 'https://dev.mypc.test/account/two_factor/'
-        current_url = self.webdriver.current_url
-        self.assertEquals(current_url,redirect_url)
-        
+        self.assert_urls(redirect_url)
         # "Next" Clicked
         button_next = self.webdriver.find_element_by_xpath("//a[@class='btn btn-primary']")
         button_next.click()
 
         # Confirm the creation of the second factor device
         redirect_url = 'https://dev.mypc.test/account/two_factor/setup/'
-        current_url = self.webdriver.current_url
-        self.assertEquals(current_url,redirect_url)
+        self.assert_urls(redirect_url)
+        
         button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
         button_next.click()
 
         # Select wizard -> webauthn
         redirect_url = 'https://dev.mypc.test/account/two_factor/setup/'
-        current_url = self.webdriver.current_url
-        self.assertEquals(current_url,redirect_url)
+        self.assert_urls(redirect_url)
+        
         webauthn_input = self.webdriver.find_element_by_xpath("//input[@value='webauthn']")
         webauthn_input.click()
         button_next = self.webdriver.find_element_by_xpath("//button[@class='btn btn-primary']")
@@ -83,7 +86,7 @@ class LoginTest(UserMixin, TestCase):
         # Agregar como usar webauthn en chrome, evitar la trampa.
         # Init The emulator Webauthn device in chrome
 
-
+        
 
 
         # Wait for authenticator(webauthn) //NO FUNCIONA//
@@ -99,13 +102,15 @@ class LoginTest(UserMixin, TestCase):
 
         # Confirmation
         redirect_url = 'https://dev.mypc.test/account/two_factor/'
-        current_url = self.webdriver.current_url
-        self.assertEquals(current_url,redirect_url)
+        self.assert_urls(redirect_url)
 
 class RegisterWebAuthnTest(UserMixin, TestCase):
     def _post(self, data=None):
         return self.client.post(reverse('two_factor:login'), data=data)
     
+    def assert_urls(self,redirect_url):
+       return self.assertEquals(self.webdriver.current_url,redirect_url)
+
     @classmethod
     def setUp(self):
         # Create a new Chrome session
@@ -124,21 +129,38 @@ class RegisterWebAuthnTest(UserMixin, TestCase):
         # Navigate into aplication login page
         login_url = "https://dev.mypc.test/account/login/"
         self.webdriver.get(login_url)
-        self.assertEquals(login_url,self.webdriver.current_url)
+        self.assert_urls(login_url)
 
         # Completed Form
         username = self.webdriver.find_element_by_id('id_auth-username')
         username.clear()
-        username.send_keys("user5")
+        username.send_keys("user2")
 
         password = self.webdriver.find_element_by_id('id_auth-password')
         password.clear()
-        password.send_keys("user5")
+        password.send_keys("user2")
 
         # "Next" Clicked
         button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
         button_next.click()
+
         
+        # Enable virtual Authenticator
+        enable_ = self.webdriver.execute_cdp_cmd('WebAuthn.enable',{})
+        # Create new Authenticator
+        virtual_authenticator_options = {
+            'protocol' : 'u2f',
+            'transport' : 'usb',
+        }
+        
+        options = self.webdriver.execute_cdp_cmd('WebAuthn.addVirtualAuthenticator', {'options' : virtual_authenticator_options})
+        
+        # Use the authenticator
+        options['enabled'] = True 
+        breakpoint()
+        self.webdriver.execute_cdp_cmd('WebAuthn.setUserVerified', options)
+        
+        #breakpoint()
         # Tengo que esperar que abra la llave
         try:
             delay = 8 #Seconds
@@ -150,13 +172,22 @@ class RegisterWebAuthnTest(UserMixin, TestCase):
         # Navigate into register two factor device page 
         register_url = "https://dev.mypc.test/account/two_factor/"
         self.webdriver.get(register_url)
-
         button_add_new_device = self.webdriver.find_element_by_xpath("//a[@href='/account/two_factor/setup/']")
         button_add_new_device.click()
-
-        # Confirmation
         redirect_url = 'https://dev.mypc.test/account/two_factor/setup/'
-        current_url = self.webdriver.current_url
-        self.assertEquals(current_url,redirect_url)
+        self.assert_urls(redirect_url)
+        
+        # "Next" Clicked
+        button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
+        button_next.click()
+
+        # Select wizard -> webauthn
+        webauthn_input = self.webdriver.find_element_by_xpath("//input[@value='webauthn']")
+        webauthn_input.click()
+        button_next = self.webdriver.find_element_by_xpath("//button[@class='btn btn-primary']")
+        button_next.click()
+        redirect_url = 'https://dev.mypc.test/account/two_factor/setup/'
+        self.assert_urls(redirect_url)
+
 
 
