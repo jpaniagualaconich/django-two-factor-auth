@@ -122,7 +122,8 @@ class LoginTest(UserMixin, TestCase):
         self.assert_urls(redirect_url)
 
         # Logout 
-        
+        logout = self.webdriver.find_element_by_xpath("//a[@href='/account/logout/']")
+        logout.click()
 
 class RegisterWebAuthnTest(UserMixin, TestCase):
     def _post(self, data=None):
