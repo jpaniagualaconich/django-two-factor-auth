@@ -14,7 +14,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
-from selenium.webdriver import devtools
 
 
 from .utils import UserMixin
@@ -36,7 +35,6 @@ class LoginTest(UserMixin, TestCase):
         
         # Navigate into aplication
         self.webdriver.get("https://dev.mypc.test/")
-        options = self.webdriver.ChromeOptions()
 
     @classmethod    
     def tearDown(self):
@@ -58,15 +56,16 @@ class LoginTest(UserMixin, TestCase):
             'transport' : 'usb',
         }
         options = self.webdriver.execute_cdp_cmd('WebAuthn.addVirtualAuthenticator', {'options' : virtual_authenticator_options})
-        
+        #self.webdriver.execute_cdp_cmd('WebAuthn.AutomaticPresenceSimulation', {'authenticatorId' : options['authenticatorId']})
+
         # Completed Form
         username = self.webdriver.find_element_by_id('id_auth-username')
         username.clear()
-        username.send_keys("userLogin")
+        username.send_keys("user5")
 
         password = self.webdriver.find_element_by_id('id_auth-password')
         password.clear()
-        password.send_keys("userLogin")
+        password.send_keys("user5")
 
         # "Next" Clicked
         button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
@@ -97,7 +96,6 @@ class LoginTest(UserMixin, TestCase):
         
     
         # Use the authenticatorcmd
-        self.webdriver.execute_cdp_cmd('WebAuthn.AutomaticPresenceSimulation', {'authenticatorId' : options['authenticatorId'], 'enable': True})
         options['isUserVerified'] = True 
         self.webdriver.execute_cdp_cmd('WebAuthn.setUserVerified', options)
 
@@ -122,7 +120,7 @@ class LoginTest(UserMixin, TestCase):
         self.assert_urls(redirect_url)
 
         # Logout 
-        
+
 
 class RegisterWebAuthnTest(UserMixin, TestCase):
     def _post(self, data=None):
