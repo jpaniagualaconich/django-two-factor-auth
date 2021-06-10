@@ -38,6 +38,10 @@ class LoginTest(UserMixin, TestCase):
 
     @classmethod    
     def tearDown(self):
+        # Logout 
+        logout = self.webdriver.find_element_by_xpath("//a[@href='/account/logout/']")
+        logout.click()
+        
         self.webdriver.quit()
 
        
@@ -94,17 +98,11 @@ class LoginTest(UserMixin, TestCase):
         button_next = self.webdriver.find_element_by_xpath("//button[@class='btn btn-primary']")
         button_next.click()
         
-    
         # Use the authenticatorcmd
         options['isUserVerified'] = True 
         self.webdriver.execute_cdp_cmd('WebAuthn.setUserVerified', options)
 
-
-
-        
-
-
-        # Wait for authenticator(webauthn) //NO FUNCIONA//
+        # Wait for authenticator(webauthn)
         try:
             delay = 8 #Seconds
             token_opt = WebDriverWait(self.webdriver, delay).until(EC.url_contains('https://dev.mypc.test/account/two_factor/complete/'))
@@ -119,8 +117,7 @@ class LoginTest(UserMixin, TestCase):
         redirect_url = 'https://dev.mypc.test/account/two_factor/'
         self.assert_urls(redirect_url)
 
-        # Logout 
-
+        
 
 class RegisterWebAuthnTest(UserMixin, TestCase):
     def _post(self, data=None):
@@ -149,6 +146,16 @@ class RegisterWebAuthnTest(UserMixin, TestCase):
         self.webdriver.get(login_url)
         self.assert_urls(login_url)
 
+        # Enable virtual Authenticator
+        enable_ = self.webdriver.execute_cdp_cmd('WebAuthn.enable',{})
+        
+        # Create new Authenticator
+        virtual_authenticator_options = {
+            'protocol' : 'u2f',
+            'transport' : 'usb',
+        }
+        options = self.webdriver.execute_cdp_cmd('WebAuthn.addVirtualAuthenticator', {'options' : virtual_authenticator_options})
+        
         # Completed Form
         username = self.webdriver.find_element_by_id('id_auth-username')
         username.clear()
@@ -161,24 +168,11 @@ class RegisterWebAuthnTest(UserMixin, TestCase):
         # "Next" Clicked
         button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
         button_next.click()
-
         
-        # Enable virtual Authenticator
-        enable_ = self.webdriver.execute_cdp_cmd('WebAuthn.enable',{})
-
-        # Create new Authenticator
-        virtual_authenticator_options = {
-            'protocol' : 'u2f',
-            'transport' : 'usb',
-        }
-        options = self.webdriver.execute_cdp_cmd('WebAuthn.addVirtualAuthenticator', {'options' : virtual_authenticator_options})
-        
-        # Use the authenticator
+        # Use the authenticatorcmd
         options['isUserVerified'] = True 
-        
         self.webdriver.execute_cdp_cmd('WebAuthn.setUserVerified', options)
         
-        #breakpoint()
         # Tengo que esperar que abra la llave
         try:
             delay = 8 #Seconds
