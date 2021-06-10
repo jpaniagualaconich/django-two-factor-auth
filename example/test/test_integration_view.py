@@ -14,6 +14,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 from webdriver_manager.chrome import ChromeDriverManager
+from selenium.webdriver import devtools
+
 
 from .utils import UserMixin
 
@@ -47,6 +49,16 @@ class LoginTest(UserMixin, TestCase):
         self.webdriver.get(login_url)
         self.assertEquals(login_url,self.webdriver.current_url)
 
+        # Enable virtual Authenticator
+        enable_ = self.webdriver.execute_cdp_cmd('WebAuthn.enable',{})
+        
+        # Create new Authenticator
+        virtual_authenticator_options = {
+            'protocol' : 'u2f',
+            'transport' : 'usb',
+        }
+        options = self.webdriver.execute_cdp_cmd('WebAuthn.addVirtualAuthenticator', {'options' : virtual_authenticator_options})
+        
         # Completed Form
         username = self.webdriver.find_element_by_id('id_auth-username')
         username.clear()
@@ -83,8 +95,13 @@ class LoginTest(UserMixin, TestCase):
         button_next = self.webdriver.find_element_by_xpath("//button[@class='btn btn-primary']")
         button_next.click()
         
-        # Agregar como usar webauthn en chrome, evitar la trampa.
-        # Init The emulator Webauthn device in chrome
+    
+        # Use the authenticatorcmd
+        self.webdriver.execute_cdp_cmd('WebAuthn.AutomaticPresenceSimulation', {'authenticatorId' : options['authenticatorId'], 'enable': True})
+        options['isUserVerified'] = True 
+        self.webdriver.execute_cdp_cmd('WebAuthn.setUserVerified', options)
+
+
 
         
 
@@ -103,6 +120,9 @@ class LoginTest(UserMixin, TestCase):
         # Confirmation
         redirect_url = 'https://dev.mypc.test/account/two_factor/'
         self.assert_urls(redirect_url)
+
+        # Logout 
+        
 
 class RegisterWebAuthnTest(UserMixin, TestCase):
     def _post(self, data=None):
@@ -147,17 +167,17 @@ class RegisterWebAuthnTest(UserMixin, TestCase):
         
         # Enable virtual Authenticator
         enable_ = self.webdriver.execute_cdp_cmd('WebAuthn.enable',{})
+
         # Create new Authenticator
         virtual_authenticator_options = {
             'protocol' : 'u2f',
             'transport' : 'usb',
         }
-        
         options = self.webdriver.execute_cdp_cmd('WebAuthn.addVirtualAuthenticator', {'options' : virtual_authenticator_options})
         
         # Use the authenticator
-        options['enabled'] = True 
-        breakpoint()
+        options['isUserVerified'] = True 
+        
         self.webdriver.execute_cdp_cmd('WebAuthn.setUserVerified', options)
         
         #breakpoint()
@@ -188,6 +208,8 @@ class RegisterWebAuthnTest(UserMixin, TestCase):
         button_next.click()
         redirect_url = 'https://dev.mypc.test/account/two_factor/setup/'
         self.assert_urls(redirect_url)
+
+
 
 
 
