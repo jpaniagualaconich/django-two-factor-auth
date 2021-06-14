@@ -79,6 +79,13 @@
         form.submit();
       }, (reason) => {
         console.error("Registration error: ", reason);
+        debugger;
+        var errMsgNode = document.createElement("p");
+        errMsgNode.setAttribute("class", "text-danger");
+        errMsgNode.appendChild(document.createTextNode(reason));
+
+        var tokenInputNode = document.querySelector('#id_webauthn-token'); 
+        tokenInputNode.parentNode.insertBefore(errMsgNode, tokenInputNode.nextSibling);
       });
     }
   </script>

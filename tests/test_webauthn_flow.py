@@ -31,10 +31,10 @@ class WebAuthnFlowTest(UserMixin, StaticLiveServerTestCase):
         super().tearDownClass()
 
     def setup_virtual_authenticator(self):
-        # Enable virtual Authenticator
+  
         enable_ = self.webdriver.execute_cdp_cmd('WebAuthn.enable',{})
         
-        # Create new Authenticator
+
         virtual_authenticator_options = {
             'protocol' : 'u2f',
             'transport' : 'usb',
@@ -42,61 +42,75 @@ class WebAuthnFlowTest(UserMixin, StaticLiveServerTestCase):
         self.virtual_authenticator = self.webdriver.execute_cdp_cmd('WebAuthn.addVirtualAuthenticator', {'options' : virtual_authenticator_options})
         #self.webdriver.execute_cdp_cmd('WebAuthn.AutomaticPresenceSimulation', {'authenticatorId' : options['authenticatorId']})
     
+    def wait_for(self, tag, timeout=8):
+        WebDriverWait(self.webdriver, timeout).until(
+            lambda driver: driver.find_element_by_tag_name(tag))
+
+    def do_login(self):
+        login_url = self.base_url + "/account/login/"
+        self.webdriver.get(login_url)
+        self.assert_url('/account/login/')
+
+        username = self.webdriver.find_element_by_id('id_auth-username')
+        username.clear()
+        username.send_keys("bouke@example.com")
+
+        password = self.webdriver.find_element_by_id('id_auth-password')
+        password.clear()
+        password.send_keys("secret")
+
+        button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
+        button_next.click()       
+
     def test_attestation_assertion_attestation(self):
         self.setup_virtual_authenticator()
 
         self.create_user()
         
-        # Navigate into aplication login page
-        login_url = self.base_url + "/account/login/"
-        self.webdriver.get(login_url)
-        self.assert_url('/account/login/')
+        self.do_login()
 
-        # Completed Form
-        username = self.webdriver.find_element_by_id('id_auth-username')
-        username.clear()
-        username.send_keys("user-login-definitivo")
+        self.wait_for('body')
+        self.webdriver.find_element(By.XPATH, '//button[text()="Enable Two-Factor Authentication"]').click()  
+        
+        self.wait_for('body')
+        self.webdriver.find_element(By.XPATH, '//h1[text()="Enable Two-Factor Authentication"]')
+        self.webdriver.find_element_by_xpath("//button[@type='submit']").click()
 
-        password = self.webdriver.find_element_by_id('id_auth-password')
-        password.clear()
-        password.send_keys("user-login-definitivo")
+        self.wait_for('body')
+        self.webdriver.find_element_by_xpath("//input[@value='webauthn']").click()
+        self.webdriver.find_element_by_xpath("//button[@class='btn btn-primary']").click()
+        
+        self.wait_for('body')
+        WebDriverWait(self.webdriver, 8).until(EC.url_contains('/account/two_factor/complete/'))
+        self.webdriver.find_element_by_xpath("//a[@class='float-right btn btn-link']").click()
 
-        # "Next" Clicked
+        self.wait_for('body')
+        self.webdriver.find_element(By.XPATH, '//p[text()="Congratulations, you've successfully enabled two-factor authentication."]')
+        self.webdriver.get(self.base_url + "/account/logout/")
+
+        self.wait_for('body')
+        self.do_login()
+
+        self.wait_for('body')
+        # self.webdriver.find_element_by_id("id_token-otp_token")
+        WebDriverWait(self.webdriver, 8).until(EC.url_contains('/account/two_factor/'))
+        self.webdriver.find_element_by_link_text("Add device").click()
+
+        set_up_two_factor_url = "/account/two_factor/setup/"
+        self.webdriver.get(self.base_url() + set_up_two_factor_url)
+        button_add_new_device = self.webdriver.find_element_by_xpath("//a[@href='/account/two_factor/setup/']")
+        button_add_new_device.click()
+        redirect_url = '/account/two_factor/setup/'
+        self.assert_url(redirect_url)
+        
+
         button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
         button_next.click()
 
-        # Navegate into aplication two_factor's device register
-        self.assert_url('/account/two_factor/')
-        
-        # "Next" Clicked
-        button_next = self.webdriver.find_element_by_xpath("//a[@class='btn btn-primary']")
-        button_next.click()
 
-        # Confirm the creation of the second factor device
-        self.assert_url('/account/two_factor/setup/')
-        
-        button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
-        button_next.click()
-
-        # Select wizard -> webauthn
-        self.assert_url('/account/two_factor/setup/')
-        
         webauthn_input = self.webdriver.find_element_by_xpath("//input[@value='webauthn']")
         webauthn_input.click()
         button_next = self.webdriver.find_element_by_xpath("//button[@class='btn btn-primary']")
         button_next.click()
-        
-
-        # Wait for authenticator(webauthn)
-        try:
-            delay = 8 #Seconds
-            token_opt = WebDriverWait(self.webdriver, delay).until(EC.url_contains('https://dev.mypc.test/account/two_factor/complete/'))
-            print("Page is ready")
-        except TimeoutException:
-            print("Se mamo: " + str(TimeoutException))
-        
-        complete = self.webdriver.find_element_by_xpath("//a[@class='float-right btn btn-link']")
-        complete.click()
-
-        # Confirmation
-        self.assert_url('/account/two_factor/')
+        redirect_url = '/account/two_factor/setup/'
+        self.assert_url(redirect_url)
