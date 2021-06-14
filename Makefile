@@ -17,15 +17,8 @@ test:
 	DJANGO_SETTINGS_MODULE=tests.settings PYTHONPATH=. \
 		django-admin.py test ${TARGET}
 
-test_server:
-	docker-compose up -d
-	DJANGO_SETTINGS_MODULE=tests.settings PYTHONPATH=. \
-		django-admin.py runserver
-	docker-compose down	
-
-selenium_test:
-	python test_webauthn_flow.py
-
+ssl-rev-proxy:
+	sh ssl/run-ssl-rev-proxy.sh
 
 migrations:
 	DJANGO_SETTINGS_MODULE=tests.settings PYTHONPATH=. \
