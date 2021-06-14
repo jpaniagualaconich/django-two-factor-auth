@@ -50,15 +50,15 @@ class WebAuthnFlow:
         # Completa campos
         username = self.webdriver.find_element_by_id('id_username')
         username.clear()
-        username.send_keys("user-login-definitivo")
+        username.send_keys("user-login-definitivo2")
 
         password = self.webdriver.find_element_by_id('id_password1')
         password.clear()
-        password.send_keys("user-login-definitivo")
+        password.send_keys("user-login-definitivo2")
         
         confirm_password = self.webdriver.find_element_by_id('id_password2')
         confirm_password.clear()
-        confirm_password.send_keys("user-login-definitivo")
+        confirm_password.send_keys("user-login-definitivo2")
 
         button_register = self.webdriver.find_element_by_xpath("//button[@type='submit']")
         button_register.click()
@@ -73,11 +73,11 @@ class WebAuthnFlow:
         # Completed Form
         username = self.webdriver.find_element_by_id('id_auth-username')
         username.clear()
-        username.send_keys("user-login-definitivo")
+        username.send_keys("user-login-definitivo2")
 
         password = self.webdriver.find_element_by_id('id_auth-password')
         password.clear()
-        password.send_keys("user-login-definitivo")
+        password.send_keys("user-login-definitivo2")
 
         # "Next" Clicked
         button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
@@ -118,6 +118,55 @@ class WebAuthnFlow:
 
         # Confirmation
         self.assert_url('/account/two_factor/')
+        
+        # Logout 
+        logout = self.webdriver.find_element_by_xpath("//a[@href='/account/logout/']")
+        logout.click()
 
+        # Navigate into aplication login page
+        login_url = "https://dev.mypc.test/account/login/"
+        self.webdriver.get(login_url)
+        self.assert_url('/account/login/')
+
+        # Completed Form
+        username = self.webdriver.find_element_by_id('id_auth-username')
+        username.clear()
+        username.send_keys("user-login-definitivo2")
+
+        password = self.webdriver.find_element_by_id('id_auth-password')
+        password.clear()
+        password.send_keys("user-login-definitivo2")
+
+        # "Next" Clicked
+        button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
+        button_next.click()
+
+         # Tengo que esperar que abra la llave
+        try:
+            delay = 8 #Seconds
+            token_opt = WebDriverWait(self.webdriver, delay).until(EC.url_contains('https://dev.mypc.test/account/two_factor/'))
+            print("Page is ready")
+        except TimeoutException:
+            print("Se mamo: " + str(TimeoutException))
+
+        # Navigate into register two factor device page 
+        register_url = "https://dev.mypc.test/account/two_factor/"
+        self.webdriver.get(register_url)
+        button_add_new_device = self.webdriver.find_element_by_xpath("//a[@href='/account/two_factor/setup/']")
+        button_add_new_device.click()
+        redirect_url = '/account/two_factor/setup/'
+        self.assert_url(redirect_url)
+        
+        # "Next" Clicked
+        button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
+        button_next.click()
+
+        # Select wizard -> webauthn
+        webauthn_input = self.webdriver.find_element_by_xpath("//input[@value='webauthn']")
+        webauthn_input.click()
+        button_next = self.webdriver.find_element_by_xpath("//button[@class='btn btn-primary']")
+        button_next.click()
+        redirect_url = '/account/two_factor/setup/'
+        self.assert_url(redirect_url)
 
 WebAuthnFlow('https://dev.mypc.test').run()     

@@ -38,8 +38,8 @@ class LoginTest(UserMixin, TestCase):
    
     def tearDown(self):
         # Logout 
-        logout = self.webdriver.find_element_by_xpath("//a[@href='/account/logout/']")
-        logout.click()
+        logout_url = "https://dev.mypc.test/account/logout/"
+        self.webdriver.get(logout_url)
         
         self.webdriver.quit()
 
@@ -63,15 +63,15 @@ class LoginTest(UserMixin, TestCase):
         # Completa campos
         username = self.webdriver.find_element_by_id('id_username')
         username.clear()
-        username.send_keys("user-login-definitivo")
+        username.send_keys("user-login-definitivo2")
 
         password = self.webdriver.find_element_by_id('id_password1')
         password.clear()
-        password.send_keys("user-login-definitivo")
+        password.send_keys("user-login-definitivo2")
         
         confirm_password = self.webdriver.find_element_by_id('id_password2')
         confirm_password.clear()
-        confirm_password.send_keys("user-login-definitivo")
+        confirm_password.send_keys("user-login-definitivo2")
 
         button_register = self.webdriver.find_element_by_xpath("//button[@type='submit']")
         button_register.click()
@@ -86,11 +86,11 @@ class LoginTest(UserMixin, TestCase):
         # Completed Form
         username = self.webdriver.find_element_by_id('id_auth-username')
         username.clear()
-        username.send_keys("user-login-definitivo")
+        username.send_keys("user-login-definitivo2")
 
         password = self.webdriver.find_element_by_id('id_auth-password')
         password.clear()
-        password.send_keys("user-login-definitivo")
+        password.send_keys("user-login-definitivo2")
 
         # "Next" Clicked
         button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
@@ -144,11 +144,11 @@ class LoginTest(UserMixin, TestCase):
         # Completed Form
         username = self.webdriver.find_element_by_id('id_auth-username')
         username.clear()
-        username.send_keys("user-login-definitivo")
+        username.send_keys("user-login-definitivo2")
 
         password = self.webdriver.find_element_by_id('id_auth-password')
         password.clear()
-        password.send_keys("user-login-definitivo")
+        password.send_keys("user-login-definitivo2")
 
         # "Next" Clicked
         button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
