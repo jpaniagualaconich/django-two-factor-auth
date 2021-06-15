@@ -1,6 +1,7 @@
 *.py[co]
 example/database.sqlite
 example/settings_private.py
+ssl/private
 *.egg-info
 /.coverage.*
 /.coverage
@@ -10,3 +11,4 @@ example/settings_private.py
 .eggs/
 
 .idea/
+.vscode/
