@@ -20,8 +20,8 @@ def make_user_id(user):
     return _webauthn_b64_encode(hashed_id).decode('utf-8')
 
 def get_credentials(user):
-   credential_list = [d.as_credential() for d in WebauthnDevice.objects.filter(user=user)[:settings.MAX_EXCLUDED_CREDENTIALS]]
-   return  credential_list
+    credential_list = [d.as_credential() for d in WebauthnDevice.objects.filter(user=user)[:settings.MAX_EXCLUDED_CREDENTIALS]]
+    return credential_list
 
 def get_response_key_format(response):
     att_obj = cbor2.loads(_webauthn_b64_decode(response['attObj']))
@@ -36,14 +36,14 @@ def get_device_used_in_response(user, response):
         return None
 
 
-def make_credentials_options(user, relying_party):
+def make_credential_options(user, relying_party):
     """
     Used for registering a new WebAuthn device: send a request to be passed to navigator.credentials.create
     :param user: the django user adding the device
     :param relying_party: a dictionary representing the relying party, with `name` and `id`
     :return: a WebAuthnMakeCredentialOptions object
     """
-    credentials_options = webauthn.WebAuthnMakeCredentialOptions(
+    credential_options = webauthn.WebAuthnMakeCredentialOptions(
         challenge=make_challenge(),
         rp_name=relying_party['name'],
         rp_id=relying_party['id'],
@@ -55,13 +55,13 @@ def make_credentials_options(user, relying_party):
 
     # Currently the webauthn lib does not support this property, so we need to inject it
     user_verification = 'required' if settings.TWO_FACTOR_WEBAUTHN_UV_REQUIRED else 'discouraged'
-    credentials_options['authenticatorSelection'] = {'userVerification': user_verification}
+    credential_options['authenticatorSelection'] = {'userVerification': user_verification}
 
     # We need to get credentials to use in excludedCredentialDescriptorList, this list have information
     # to avoid double registration of WebAuthnDevices per user. 
-    credentials_options['excludeCredentials'] = get_credentials(user)
+    credential_options['excludeCredentials'] = get_credentials(user)
 
-    return credentials_options
+    return credential_options
 
 
 def make_registration_response(request, response, relying_party, origin):
