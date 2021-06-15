@@ -40,7 +40,7 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
                 'id': self.RELYING_PARTY['id'],
             },
             'user':{
-                'id': 'make_user_id_output',
+                'id': '_webauthn_b64_encode_output',
                 'name': "bouke@example.com",
                 'displayName': '',
                 'icon': None,
@@ -56,7 +56,7 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
                 'type': 'public-key',
             }],
             'timeout': 60000,
-            'excludeCredentials': '[]',
+            'excludeCredentials': [d.as_credential() for d in WebauthnDevice.objects.filter(user=user)[:settings.MAX_EXCLUDED_CREDENTIALS]],
             'attestation': 'direct',
             'extensions':{
                 'webauthn.loc': True
@@ -73,57 +73,12 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
         get_credentials_return_value = '[]'
         with mock.patch(
             'two_factor.webauthn_utils._webauthn_b64_encode', return_value=_webauthn_b64_encode_return_value
-        ) as _webauthn_b64_encode, mock.patch(
-            'two_factor.webauthn_utils.make_user_id', return_value=make_user_id_return_value
-        ) as make_user_id, mock.patch(
-            'two_factor.webauthn_utils.get_credentials',return_value=get_credentials_return_value
-        ) as get_credentials:
+        ) as _webauthn_b64_encode:
             output = webauthn_utils.make_credentials_options(user=self.user,relying_party=self.RELYING_PARTY)
         
         assert _webauthn_b64_encode.called
-        assert make_user_id.called
-        assert get_credentials.called
+        
 
         assert output == self.REGISTRATION_DIC
-                
-        
-        
-     
-    def test_make_registration_response(self):
-        # Para mi que no tengo que mockar el Json.loads
-        with mock.patch(
-            'two_factor.webauthn_utils.make_credentials_options',return_value='registration_dic'
-        ) as make_credential_options, mock.patch(
-            'json.loads', return_value='registration_dic_json'
-        ) as json_load:
-            webauthn_registration_request = webauthn_utils.make_credentials_options(user=self.user,relying_party=self.RELYING_PARTY)
-            request = json.loads(webauthn_registration_request)
-        
-        assert make_credential_options.called
-        assert json_load.called
 
-        #Consultar Sobre posibles datos de prueba. Mock
-        token = {
-            "id":"jG8U_3ojAw15KCsXLx93wA5fix4VeVVrrdW5dxaqmrI",
-            "clientDataJSON":"eyJ0eXBlIjoid2ViYXV0aG4uY3JlYXRlIiwiY2hhbGxlbmdlIjoiVXRoekZ6QkREWW5GT0ZKZmYwOV9KRW9YcWFXQmRVWjBJU1daRi1SSzFwSSIsIm9yaWdpbiI6Imh0dHBzOi8vZGV2Lm15cGMudGVzdCIsImNyb3NzT3JpZ2luIjpmYWxzZX0",
-            "attestationObject":"o2NmbXRoZmlkby11MmZnYXR0U3RtdKJjc2lnWEgwRgIhALQy_v5CG7Iw1VIWfLjJNLw_lkMl-tEPMToctaRusJm0AiEA3nkZ0yaAobQTNfv7xwwgoOejllAZSLAxGQY9cmU5O79jeDVjgVkB4jCCAd4wggGAoAMCAQICAQEwDQYJKoZIhvcNAQELBQAwYDELMAkGA1UEBhMCVVMxETAPBgNVBAoMCENocm9taXVtMSIwIAYDVQQLDBlBdXRoZW50aWNhdG9yIEF0dGVzdGF0aW9uMRowGAYDVQQDDBFCYXRjaCBDZXJ0aWZpY2F0ZTAeFw0xNzA3MTQwMjQwMDBaFw00MTA2MDEwMDUzMTRaMGAxCzAJBgNVBAYTAlVTMREwDwYDVQQKDAhDaHJvbWl1bTEiMCAGA1UECwwZQXV0aGVudGljYXRvciBBdHRlc3RhdGlvbjEaMBgGA1UEAwwRQmF0Y2ggQ2VydGlmaWNhdGUwWTATBgcqhkjOPQIBBggqhkjOPQMBBwNCAASNYX5lyVCOZLzFZzrIKmeZ2jwURmgsJYxGP__fWN_S-j5sN4tT15XEpN_7QZnt14YvI6uvAgO0uJEboFaZlOEBoygwJjATBgsrBgEEAYLlHAIBAQQEAwIFIDAPBgNVHRMBAf8EBTADAQEAMA0GCSqGSIb3DQEBCwUAA0kAMEYCIQCRnz8VkrQiqO2bVMay7ylMkys8lAQx1qfTqjbsbDKWyAIhAL6cQXPoXLO2FY1ZETjzFutCJZ7ZnM2Ki1zRAVi_pyGaaGF1dGhEYXRhWKRuLdl-XiO8OZcxMrelHAwyyICdNRPE0iuzW4ejVJpuakEAAAAAAAAAAAAAAAAAAAAAAAAAAAAgjG8U_3ojAw15KCsXLx93wA5fix4VeVVrrdW5dxaqmrKlAQIDJiABIVgg0lcmU9O_uc8VJZnavYvjF_QwbOxMISYY5XW73mLKtLsiWCB8L9D9h5inMJlbRBpKNlNlQ7Y49JScryKPf5k-RUmclw"
-            }
-
-        response = self.client.post(reverse('two_factor:setup'),
-                                    data={'setup_view-current_step': 'webauthn',
-                                        'webauthn-token':token})
-        breakpoint()               
-        webauthn_registration_response = webauthn_utils.make_registration_response(
-            request, response, self.RELYING_PARTY, self.ORIGIN
-        )
-
-    
-    # def test_make_assertion_options(self):
-    #     user = self.create_user()
-    #     self.login_user(user=user)
-    #     make_assertion_options = webauthn_utils.make_assertion_options(user=user,relying_party=self.RELYING_PARTY)
-    #     self.assertEquals(make_assertion_options, webauthn_utils.make_assertion_options(user=user,relying_party=self.RELYING_PARTY))
-
-    # def test_make_assertion_response(self):
-    #     pass
     
