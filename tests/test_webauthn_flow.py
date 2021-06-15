@@ -81,7 +81,7 @@ class WebAuthnFlowTest(UserMixin, StaticLiveServerTestCase):
         self.webdriver.find_element_by_xpath("//a[@class='float-right btn btn-link']").click()
 
         self.wait_for('body')
-        self.webdriver.find_element(By.XPATH, '//p[text()="Congratulations, you've successfully enabled two-factor authentication."]')
+        self.webdriver.find_element(By.XPATH, '//p[text()="Congratulations, you\'ve successfully enabled two-factor authentication."]')
         self.webdriver.get(self.base_url + "/account/logout/")
 
         self.wait_for('body')
@@ -92,21 +92,13 @@ class WebAuthnFlowTest(UserMixin, StaticLiveServerTestCase):
         WebDriverWait(self.webdriver, 8).until(EC.url_contains('/account/two_factor/'))
         self.webdriver.find_element_by_link_text("Add device").click()
 
-        set_up_two_factor_url = "/account/two_factor/setup/"
-        self.webdriver.get(self.base_url() + set_up_two_factor_url)
-        button_add_new_device = self.webdriver.find_element_by_xpath("//a[@href='/account/two_factor/setup/']")
-        button_add_new_device.click()
-        redirect_url = '/account/two_factor/setup/'
-        self.assert_url(redirect_url)
+        self.wait_for('body')
+        self.webdriver.get(self.base_url() + "/account/two_factor/setup/")
+        self.webdriver.find_element(By.XPATH, '//button[text()="Add device"]').click()
         
+        self.wait_for('body')
+        self.webdriver.find_element_by_xpath("//button[@type='submit']").click()
 
-        button_next = self.webdriver.find_element_by_xpath("//button[@type='submit']")
-        button_next.click()
-
-
-        webauthn_input = self.webdriver.find_element_by_xpath("//input[@value='webauthn']")
-        webauthn_input.click()
-        button_next = self.webdriver.find_element_by_xpath("//button[@class='btn btn-primary']")
-        button_next.click()
-        redirect_url = '/account/two_factor/setup/'
-        self.assert_url(redirect_url)
+        self.wait_for('body')
+        self.webdriver.find_element_by_xpath("//input[@value='webauthn']").click()
+        self.webdriver.find_element_by_xpath("//button[@class='btn btn-primary']").click()
