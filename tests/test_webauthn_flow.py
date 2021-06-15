@@ -66,10 +66,10 @@ class WebAuthnFlowTest(UserMixin, StaticLiveServerTestCase):
         self.do_login()
 
         self.wait_for('body')
-        self.webdriver.find_element(By.XPATH, '//button[text()="Enable Two-Factor Authentication"]').click()  
+        self.webdriver.find_element_by_xpath('//button[text()="Enable Two-Factor Authentication"]').click()  
         
         self.wait_for('body')
-        self.webdriver.find_element(By.XPATH, '//h1[text()="Enable Two-Factor Authentication"]')
+        self.webdriver.find_element_by_xpath('//h1[text()="Enable Two-Factor Authentication"]')
         self.webdriver.find_element_by_xpath("//button[@type='submit']").click()
 
         self.wait_for('body')
@@ -81,7 +81,7 @@ class WebAuthnFlowTest(UserMixin, StaticLiveServerTestCase):
         self.webdriver.find_element_by_xpath("//a[@class='float-right btn btn-link']").click()
 
         self.wait_for('body')
-        self.webdriver.find_element(By.XPATH, '//p[text()="Congratulations, you\'ve successfully enabled two-factor authentication."]')
+        self.webdriver.find_element_by_xpath('//p[text()="Congratulations, you\'ve successfully enabled two-factor authentication."]')
         self.webdriver.get(self.base_url + "/account/logout/")
 
         self.wait_for('body')
@@ -94,7 +94,7 @@ class WebAuthnFlowTest(UserMixin, StaticLiveServerTestCase):
 
         self.wait_for('body')
         self.webdriver.get(self.base_url() + "/account/two_factor/setup/")
-        self.webdriver.find_element(By.XPATH, '//button[text()="Add device"]').click()
+        self.webdriver.find_element_by_xpath('//button[text()="Add device"]').click()
         
         self.wait_for('body')
         self.webdriver.find_element_by_xpath("//button[@type='submit']").click()
