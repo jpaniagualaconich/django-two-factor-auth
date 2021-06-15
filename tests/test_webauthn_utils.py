@@ -76,5 +76,3 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
         
         assert _webauthn_b64_encode.called
         assert output == self.REGISTRATION_DIC
-
-    

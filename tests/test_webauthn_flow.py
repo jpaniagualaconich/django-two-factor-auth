@@ -31,16 +31,12 @@ class WebAuthnFlowTest(UserMixin, StaticLiveServerTestCase):
         super().tearDownClass()
 
     def setup_virtual_authenticator(self):
-  
         enable_ = self.webdriver.execute_cdp_cmd('WebAuthn.enable',{})
-        
-
         virtual_authenticator_options = {
             'protocol' : 'u2f',
             'transport' : 'usb',
         }
         self.virtual_authenticator = self.webdriver.execute_cdp_cmd('WebAuthn.addVirtualAuthenticator', {'options' : virtual_authenticator_options})
-        #self.webdriver.execute_cdp_cmd('WebAuthn.AutomaticPresenceSimulation', {'authenticatorId' : options['authenticatorId']})
     
     def wait_for(self, tag, timeout=8):
         WebDriverWait(self.webdriver, timeout).until(
