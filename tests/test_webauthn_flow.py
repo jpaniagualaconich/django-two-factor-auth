@@ -66,7 +66,7 @@ class WebAuthnFlowTest(UserMixin, StaticLiveServerTestCase):
         self.do_login()
 
         self.wait_for('body')
-        self.webdriver.find_element(By.XPATH, '//button[span=\'Enable Two-Factor Authentication\']').click()  
+        self.webdriver.find_element(By.XPATH, '//a[contains(text(),\'Enable Two-Factor Authentication\')]').click()  
         
         self.wait_for('body')
         self.webdriver.find_element(By.XPATH, '//h1[text()=\'Enable Two-Factor Authentication\']')
