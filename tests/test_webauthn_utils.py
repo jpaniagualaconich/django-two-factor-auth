@@ -69,16 +69,12 @@ class WebAuthnUtilsTest(UserMixin,TestCase):
 
     def test_make_credentials_options(self):
         _webauthn_b64_encode_return_value = '_webauthn_b64_encode_output'.encode('utf-8')
-        make_user_id_return_value = 'make_user_id_output'
-        get_credentials_return_value = '[]'
         with mock.patch(
             'two_factor.webauthn_utils._webauthn_b64_encode', return_value=_webauthn_b64_encode_return_value
         ) as _webauthn_b64_encode:
             output = webauthn_utils.make_credentials_options(user=self.user,relying_party=self.RELYING_PARTY)
         
         assert _webauthn_b64_encode.called
-        
-
         assert output == self.REGISTRATION_DIC
 
     
