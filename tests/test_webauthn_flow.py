@@ -102,3 +102,6 @@ class WebAuthnFlowTest(UserMixin, StaticLiveServerTestCase):
         self.wait_for('body')
         self.webdriver.find_element_by_xpath("//input[@value='webauthn']").click()
         self.webdriver.find_element_by_xpath("//button[@class='btn btn-primary']").click()
+
+        # message = 'InvalidStateError: The user attempted to register an authenticator that contains one of the credentials already registered with the relying party.'
+        # assert  message == self.webdriver.find_element_by_xpath("//p[@class='text-danger']")
