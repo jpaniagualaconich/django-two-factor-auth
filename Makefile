@@ -17,6 +17,9 @@ test:
 	DJANGO_SETTINGS_MODULE=tests.settings PYTHONPATH=. \
 		django-admin.py test ${TARGET}
 
+ssl-rev-proxy:
+	sh ssl/run-ssl-rev-proxy.sh
+
 migrations:
 	DJANGO_SETTINGS_MODULE=tests.settings PYTHONPATH=. \
 		django-admin.py makemigrations two_factor

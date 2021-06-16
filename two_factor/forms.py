@@ -112,7 +112,7 @@ class WebauthnDeviceForm(forms.Form):
         if self.data:
             self.registration_request = self.request.session['webauthn_registration_request']
         else:
-            make_credential_options = webauthn_utils.make_credentials_options(user, self._get_relying_party())
+            make_credential_options = webauthn_utils.make_credential_options(user, self._get_relying_party())
             self.registration_request = json.dumps(make_credential_options)
             self.request.session['webauthn_registration_request'] = self.registration_request
 

@@ -21,6 +21,11 @@ flake8
 tox
 isort
 
+# Testing (Selenium)
+
+selenium==3.141.0
+webdriver-manager==3.4.2
+
 # Translation
 
 transifex-client

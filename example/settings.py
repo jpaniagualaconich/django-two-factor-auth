@@ -105,6 +105,11 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 
 SILENCED_SYSTEM_CHECKS = ['admin.E410']
 
+MAX_EXCLUDED_CREDENTIALS = 3
+
+TWO_FACTOR_WEBAUTHN_TRUSTED_ATTESTATION_CERT_REQUIRED = False
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 try:
     from .settings_private import *  # noqa
 except ImportError:
